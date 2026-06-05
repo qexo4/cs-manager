@@ -14,9 +14,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Jeśli wybrano ban > 0 dni, zapisujemy aktualny czas jako start bana
     $ban_start_at = $ban_days > 0 ? date('Y-m-d H:i:s') : null;
 
+    // Poprawiona składnia UPSERT pod PostgreSQL (ON CONFLICT)
     $sql = "INSERT INTO accounts (name, amount, end_amount, profit, result, ban_days, ban_start_at) 
             VALUES (:name, :amount, :end_amount, :profit, :result, :ban_days, :ban_start_at) 
-            ON DUPLICATE KEY UPDATE 
+            ON CONFLICT (name) DO UPDATE SET 
                 amount = :amount2, 
                 end_amount = :end_amount2,
                 profit = :profit2, 
@@ -41,6 +42,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         'ban_start_at2' => $ban_start_at
     ]);
 
+    // Formatowanie ładnej wiadomości na Discord
+    $msg = "📝 **Zaktualizowano / Dodano konto w panelu!**\n";
+    $msg .= "👤 **Nazwa:** $name\n";
+    $msg .= "💰 **Zysk:** $profit PLN ($result)\n";
+    if ($ban_days > 0) {
+        $msg .= "⏱️ **Status:** Nałożono ban na $ban_days dni.";
+    } else {
+        $msg .= "✅ **Status:** Brak bana (Aktywne).";
+    }
+
+    // Wysyłamy powiadomienie (funkcja z config.php)
+    if (function_exists('sendDiscordMessage')) {
+        sendDiscordMessage($msg);
+    }
+
     header('Location: index.php');
     exit;
 }
@@ -54,3 +70,4 @@ if (isset($_GET['action']) && $_GET['action'] === 'delete' && isset($_GET['id'])
     header('Location: index.php');
     exit;
 }
+?>
