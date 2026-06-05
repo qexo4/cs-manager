@@ -26,8 +26,8 @@ try {
      die("Błąd połączenia z bazą danych: " . $e->getMessage());
 }
     // Funkcja wysyłająca powiadomienia na Discord
+// Funkcja wysyłająca powiadomienia na Discord (Wersja Poprawiona)
 function sendDiscordMessage($message) {
-    // TUTAJ WKLEJ SWÓJ LINK WEBHOOKA Z DISCORDA
     $webhookUrl = "https://discord.com/api/webhooks/1512507843801124876/JB3O32EtcgKbUmBDjnTY9kJAmszKY7oIVS9FLin6bKsEsPZOmN1fxGZeJ_XT2xIUucNb";
 
     $json_data = json_encode([
@@ -39,7 +39,7 @@ function sendDiscordMessage($message) {
     $ch = curl_init($webhookUrl);
     curl_setopt($ch, CURLOPT_HTTPHEADER, array('Content-type: application/json'));
     curl_setopt($ch, CURLOPT_POST, 1);
-    curl_setopt_array($ch, CURLOPT_POSTFIELDS, $json_data);
+    curl_setopt($ch, CURLOPT_POSTFIELDS, $json_data); // <--- Tutaj była poprawiona linijka
     curl_setopt($ch, CURLOPT_FOLLOWLOCATION, 1);
     curl_setopt($ch, CURLOPT_HEADER, 0);
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
