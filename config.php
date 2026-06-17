@@ -12,15 +12,13 @@ $options = [
     PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
     PDO::ATTR_EMULATE_PREPARES => false,
 ];
-
 try {
-     $pdo = new PDO($dsn, $user, $pass, $options);
+    $pdo = new PDO($dsn, $user, $pass, $options);
 } catch (\PDOException $e) {
-     die("Błąd połączenia: " . $e->getMessage());
+    die("Błąd połączenia: " . $e->getMessage());
 }
 
 function sendDiscordMessage($message) {
-    // TWÓJ NOWY LINK
     $webhookUrl = "https://discord.com/api/webhooks/1516845357148012584/cQvSxqpuqDWjWS8-y_J7lRlXXMezqF0n-UfklpSdsrb-zLlj_RcY4jVaQOScsPGtP958";
 
     $json_data = json_encode([
@@ -35,11 +33,13 @@ function sendDiscordMessage($message) {
     curl_setopt($ch, CURLOPT_POSTFIELDS, $json_data);
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
     curl_setopt($ch, CURLOPT_TIMEOUT, 10);
-    
+
     $response = curl_exec($ch);
+    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
     $error = curl_error($ch);
     curl_close($ch);
-    
+
+    error_log("Discord HTTP kod: " . $httpCode . " | Odpowiedź: " . $response);
     if ($error) error_log("Błąd cURL: " . $error);
     return $response;
 }
