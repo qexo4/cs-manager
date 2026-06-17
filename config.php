@@ -19,7 +19,7 @@ try {
 }
 
 function sendDiscordMessage($message) {
-    $webhookUrl = "https://discord.com/api/webhooks/1516845357148012584/cQvSxqpuqDWjWS8-y_J7lRlXXMezqF0n-UfklpSdsrb-zLlj_RcY4jVaQOScsPGtP958";
+    $webhookUrl = "https://discord.com/api/webhooks/1516849833783070871/5loQ2q9IUhvA9rFMznksJng8NpJTDmossh0swrA9qrAArWB_wV16_EG3iWiMtN27bhfC";
 
     $json_data = json_encode([
         "content" => $message,
