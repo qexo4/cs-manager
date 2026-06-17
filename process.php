@@ -2,10 +2,6 @@
 // Najpierw ładujemy konfigurację, aby załadować funkcję sendDiscordMessage
 require_once 'config.php';
 
-// Test (opcjonalny) - zobaczysz wynik w logach Render.com
-error_log("TEST POŁĄCZENIA Z DISCORDEM START");
-$test = sendDiscordMessage("Test ręczny z process.php");
-error_log("TEST ZAKOŃCZONY, wynik: " . ($test ? "SUKCES" : "PORAŻKA"));
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $name = trim($_POST['name']);
