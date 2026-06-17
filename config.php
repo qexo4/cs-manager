@@ -28,15 +28,42 @@ try {
     // Funkcja wysyłająca powiadomienia na Discord
 // Funkcja wysyłająca powiadomienia na Discord (Wersja Poprawiona)
 function sendDiscordMessage($message) {
+    // Upewnij się, że ten link jest poprawny i kompletny!
     $webhookUrl = "https://discord.com/api/webhooks/1512507843801124876/JB3O32EtcgKbUmBDjnTY9kJAmszKY7oIVS9FLin6bKsEsPZOmN1fxGZeJ_XT2xIUucNb";
-$response = curl_exec($ch);
-    $error = curl_error($ch); // Sprawdzamy błąd
-    curl_close($ch);
-    
-    // Jeśli jest błąd, wyświetl go na ekranie
-    if ($error) {
-        die("BŁĄD CURL: " . $error);
+
+    if (empty($webhookUrl)) {
+        error_log("Błąd: Pusty URL Webhooka!");
+        return false;
     }
+
+    $json_data = json_encode([
+        "content" => $message,
+        "username" => "CS-Manager Bot",
+        "tts" => false
+    ], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+
+    $ch = curl_init($webhookUrl);
+    
+    // Sprawdzamy, czy curl_init się udał
+    if ($ch === false) {
+        error_log("Błąd: curl_init zwrócił false!");
+        return false;
+    }
+
+    curl_setopt($ch, CURLOPT_HTTPHEADER, array('Content-type: application/json'));
+    curl_setopt($ch, CURLOPT_POST, 1);
+    curl_setopt($ch, CURLOPT_POSTFIELDS, $json_data);
+    curl_setopt($ch, CURLOPT_FOLLOWLOCATION, 1);
+    curl_setopt($ch, CURLOPT_HEADER, 0);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+
+    $response = curl_exec($ch);
+    
+    if ($response === false) {
+        error_log("Błąd cURL: " . curl_error($ch));
+    }
+    
+    curl_close($ch);
     return $response;
 }
 ?>
