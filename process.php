@@ -1,4 +1,8 @@
 <?php
+// Testowanie połączenia przed jakimkolwiek innym kodem
+error_log("TEST POŁĄCZENIA Z DISCORDEM START");
+$test = sendDiscordMessage("Test ręczny z process.php");
+error_log("TEST ZAKOŃCZONY, wynik: " . ($test ? "SUKCES" : "PORAŻKA"));
 require_once 'config.php';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
