@@ -29,7 +29,7 @@ try {
 // Funkcja wysyłająca powiadomienia na Discord (Wersja Poprawiona)
 function sendDiscordMessage($message) {
     // Upewnij się, że ten link jest poprawny i kompletny!
-    $webhookUrl = "https://discord.com/api/webhooks/1512507843801124876/JB3O32EtcgKbUmBDjnTY9kJAmszKY7oIVS9FLin6bKsEsPZOmN1fxGZeJ_XT2xIUucNb";
+    $webhookUrl = "https://discord.com/api/webhooks/1516845357148012584/cQvSxqpuqDWjWS8-y_J7lRlXXMezqF0n-UfklpSdsrb-zLlj_RcY4jVaQOScsPGtP958";
 
     if (empty($webhookUrl)) {
         error_log("Błąd: Pusty URL Webhooka!");
