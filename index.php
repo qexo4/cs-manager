@@ -1,5 +1,7 @@
+
 <?php
-require_once 'config.php';
+
+require_once 'cron.php';
 
 // Pobranie danych
 $stmt = $pdo->query("SELECT * FROM accounts ORDER BY id DESC");
