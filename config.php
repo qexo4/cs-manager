@@ -1,5 +1,5 @@
 <?php
-// Definicja parametrów połączenia z bazą PostgreSQL (Render/VPS)
+// Dane połączeniowe do bazy PostgreSQL
 $dbUrl = 'postgresql://sc2_user:wXGoNehFbduj2j6wSlJqkWrfkbMTPrOY@dpg-d8hfpme47okc738jnjt0-a/sc2';
 $dbopts = parse_url($dbUrl);
 $host = $dbopts["host"];
@@ -10,24 +10,22 @@ $db   = ltrim($dbopts["path"], '/');
 $dsn = "pgsql:host=$host;port=$port;dbname=$db";
 
 $options = [
-    PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, // Wymuszenie rzucania wyjątków przy błędach SQL do łatwego debugowania
-    PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC, // Zwracanie wyników jako czyste tablice asocjacyjne
-    PDO::ATTR_EMULATE_PREPARES => false, // Wyłączenie emulacji – natywne bindowanie chroni przed SQL Injection
+    PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+    PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+    PDO::ATTR_EMULATE_PREPARES => false,
 ];
 
 try {
      $pdo = new PDO($dsn, $user, $pass, $options);
 } catch (\PDOException $e) {
-     // Logowanie błędu na serwerze i ukrycie wrażliwych danych przed użytkownikiem
-     error_log("Błąd bazy danych: " . $e->getMessage());
-     die("Błąd połączenia z bazą danych. Spróbuj ponownie później.");
+     die("Błąd połączenia: " . $e->getMessage());
 }
 
 /**
- * Wysyła powiadomienie tekstowe na serwer Discord przy użyciu protokołu cURL i formatu JSON.
+ * Wysyła sformatowaną wiadomość na Discord za pomocą Webhooka
  */
 function sendDiscordMessage($message) {
-    // Twój nowy, działający URL Webhooka Discord
+    // Twój NOWY link podany w zgłoszeniu
     $webhookUrl = "https://discord.com/api/webhooks/1512507843801124876/JB3O32EtcgKbUmBDjnTY9kJAmszKY7oIVS9FLin6bKsEsPZOmN1fxGZeJ_XT2xIUucNb";
 
     $json_data = json_encode([
@@ -41,14 +39,14 @@ function sendDiscordMessage($message) {
     curl_setopt($ch, CURLOPT_POST, 1);
     curl_setopt($ch, CURLOPT_POSTFIELDS, $json_data);
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-    curl_setopt($ch, CURLOPT_TIMEOUT, 10); // Timeout chroni aplikację przed zawieszeniem, gdyby API Discorda wolno działało
+    curl_setopt($ch, CURLOPT_TIMEOUT, 10);
     
     $response = curl_exec($ch);
     $error = curl_error($ch);
     curl_close($ch);
     
     if ($error) {
-        error_log("Błąd cURL Discord: " . $error);
+        error_log("Błąd cURL: " . $error);
     }
     return $response;
 }
