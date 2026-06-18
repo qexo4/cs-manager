@@ -1,5 +1,5 @@
 <?php
-// Przywrócono: skrypt cron odpala się przy odświeżeniu strony, aby aktualizować bany w tle
+// Skrypt cron odpala się przy odświeżeniu, aby aktualizować statusy w tle
 require_once 'cron.php'; 
 
 // Pobranie danych
@@ -112,6 +112,21 @@ $chartData = array_reverse($chartData);
                             <option value="lose">LOSE (Przegrana)</option>
                         </select>
                     </div>
+                    
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-400 uppercase mb-1">Długość bana</label>
+                        <select name="ban_days" id="ban-days-select" class="w-full bg-gray-700 border border-gray-600 rounded-lg p-2.5 text-white focus:ring-2 focus:ring-emerald-500 focus:outline-none" onchange="toggleCustomDateInput()">
+                            <option value="0">Brak bana (Aktywne)</option>
+                            <option value="8">8 dni</option>
+                            <option value="30">30 dni</option>
+                            <option value="custom">Własna data (Wybierz z kalendarza)...</option>
+                        </select>
+                    </div>
+
+                    <div id="custom-date-container" class="hidden bg-gray-750 p-3 rounded-lg border border-gray-650 space-y-1">
+                        <label class="block text-xs font-semibold text-amber-400 uppercase">Kiedy dokładnie kończy się ban?</label>
+                        <input type="datetime-local" id="custom-date-input" class="w-full bg-gray-700 border border-gray-600 rounded-lg p-2 text-white focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                    </div>
 
                     <button type="submit" class="w-full bg-emerald-500 hover:bg-emerald-600 text-gray-900 font-bold p-3 rounded-lg transition duration-200 cursor-pointer">
                         Zatwierdź i Zapisz
@@ -164,7 +179,7 @@ $chartData = array_reverse($chartData);
                                         <?php endif; ?>
                                     </td>
                                     <td class="p-4">
-                                        <?php if (isset($acc['ban_days']) && $acc['ban_days'] > 0 && !empty($acc['ban_start_at'])): ?>
+                                        <?php if ($acc['ban_days'] > 0 && $acc['ban_start_at']): ?>
                                             <?php 
                                             $startTimeMs = strtotime($acc['ban_start_at']) * 1000;
                                             $banDays = $acc['ban_days'];
@@ -193,6 +208,47 @@ $chartData = array_reverse($chartData);
     </div>
 
     <script>
+        // PRZYWRÓCONO: Pokazywanie i ukrywanie kalendarza
+        function toggleCustomDateInput() {
+            const select = document.getElementById('ban-days-select');
+            const container = document.getElementById('custom-date-container');
+            const input = document.getElementById('custom-date-input');
+            
+            if (select.value === 'custom') {
+                container.classList.remove('hidden');
+                input.setAttribute('required', 'required');
+            } else {
+                container.classList.add('hidden');
+                input.removeAttribute('required');
+            }
+        }
+
+        // PRZYWRÓCONO: Przeliczanie kalendarza na dni przed wysłaniem formularza
+        document.getElementById('account-form').addEventListener('submit', function(e) {
+            const select = document.getElementById('ban-days-select');
+            if (select.value === 'custom') {
+                const customDateVal = document.getElementById('custom-date-input').value;
+                if (!customDateVal) {
+                    e.preventDefault();
+                    alert('Proszę wybrać datę i godzinę zakończenia bana!');
+                    return;
+                }
+
+                const targetDate = new Date(customDateVal);
+                const now = new Date();
+                const diffMs = targetDate - now;
+                const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+
+                if (diffDays <= 0) {
+                    e.preventDefault();
+                    alert('Wybrana data zakończenia bana musi być w przyszłości!');
+                    return;
+                }
+
+                select.options[select.selectedIndex].value = diffDays;
+            }
+        });
+
         // LIVE OBLICZANIE ZYSKU W FORMULARZU
         const inputAmount = document.getElementById('input-amount');
         const inputEnd = document.getElementById('input-end');
@@ -214,7 +270,7 @@ $chartData = array_reverse($chartData);
         inputAmount.addEventListener('input', calculateLiveProfit);
         inputEnd.addEventListener('input', calculateLiveProfit);
 
-        // PRZYWRÓCONO: LIVE COUNTDOWN BANA + AKTUALIZACJA GÓRNEGO KAFELKA
+        // LIVE COUNTDOWN BANA + AKTUALIZACJA GÓRNEGO KAFELKA
         function updateBanTimers() {
             const now = Date.now();
             let shortestTime = Infinity;
