@@ -8,8 +8,6 @@ $accounts = $stmt->fetchAll();
 // Pobieramy aktualny czas serwera
 $now = new DateTime();
 
-echo "Uruchomiono sprawdzanie banów: " . $now->format('Y-m-d H:i:s') . "\n";
-
 foreach ($accounts as $acc) {
     $banStart = new DateTime($acc['ban_start_at']);
     $banDays = $acc['ban_days'];
