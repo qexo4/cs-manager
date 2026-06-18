@@ -23,7 +23,7 @@ foreach ($accounts as $acc) {
         $updateStmt->execute([$acc['id']]);
         
         // Przygotowanie profesjonalnej wiadomości Embed lub zwykłej tekstowej z emoji
-        $msg = "🎉 🔔 **KONIEC BANA!**\n";
+        $msg = "🎉 🔔 **KONIEC BANA! @everyone  **\n";
         $msg .= "👤 Konto: **{$acc['name']}** zostało automatycznie odbanowane!\n";
         $msg .= "✅ Status: Gotowe do ponownej pracy. Czas trwania bana wynosił: $banDays dni.";
         
