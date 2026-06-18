@@ -1,32 +1,35 @@
 <?php
-// Dane połączeniowe do bazy PostgreSQL zaktualizowane pod Supabase
-$dbUrl = 'postgresql://postgres:ZXC123asd!@#1@db.gspabzptmmwboauxwvip.supabase.co:5432/postgres';
+// =========================================================================
+// 1. DANE POŁĄCZENIOWE DO BAZY POSTGRESQL (SUPABASE)
+// =========================================================================
+$host = 'db.gspabzptmmwboauxwvip.supabase.co';
+$port = '5432';
+$user = 'postgres';
+$pass = 'ZXC123asd!@#1'; // <-- Wpisz tutaj hasło ustawione podczas rejestracji
+$db   = 'postgres';
 
-$dbopts = parse_url($dbUrl);
-$host = $dbopts["host"];
-$port = isset($dbopts["port"]) ? $dbopts["port"] : "5432";
-$user = $dbopts["user"];
-$pass = $dbopts["pass"];
-$db   = ltrim($dbopts["path"], '/');
 $dsn = "pgsql:host=$host;port=$port;dbname=$db";
 
 $options = [
-    PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+    PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
     PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-    PDO::ATTR_EMULATE_PREPARES => false,
+    PDO::ATTR_EMULATE_PREPARES   => false,
 ];
 
 try {
      $pdo = new PDO($dsn, $user, $pass, $options);
 } catch (\PDOException $e) {
-     die("Błąd połączenia: " . $e->getMessage());
+     die("Błąd połączenia z nową bazą danych: " . $e->getMessage());
 }
 
+// =========================================================================
+// 2. FUNKCJE POMOCNICZE (POWIADOMIENIA DISCORD)
+// =========================================================================
 /**
  * Wysyła sformatowaną wiadomość na Discord za pomocą Webhooka
  */
 function sendDiscordMessage($message) {
-    // Twój link podany w zgłoszeniu
+    // Twój aktualny link webhooka z Discorda
     $webhookUrl = "https://discord.com/api/webhooks/1512507843801124876/JB3O32EtcgKbUmBDjnTY9kJAmszKY7oIVS9FLin6bKsEsPZOmN1fxGZeJ_XT2xIUucNb";
 
     $json_data = json_encode([
@@ -47,7 +50,7 @@ function sendDiscordMessage($message) {
     curl_close($ch);
     
     if ($error) {
-        error_log("Błąd cURL: " . $error);
+        error_log("Błąd cURL (Discord): " . $error);
     }
     return $response;
 }
