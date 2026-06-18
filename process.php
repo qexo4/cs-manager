@@ -6,20 +6,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $amount = floatval($_POST['amount']);
     $end_amount = floatval($_POST['end_amount']);
     $result = $_POST['result'];
+    $ban_days = intval($_POST['ban_days']); // Przywrócono pobieranie liczby dni bana
     
     // AUTOMATYCZNE OBLICZANIE ZYSKU: Koniec - Kwota
     $profit = $end_amount - $amount;
     
-    // Usunięto całkowicie pobieranie $_POST['ban_days'], co naprawia błąd "Undefined array key"
+    // Jeśli wybrano ban > 0 dni, zapisujemy aktualny czas jako start bana
+    $ban_start_at = $ban_days > 0 ? date('Y-m-d H:i:s') : null;
 
-    // Oczyszczona składnia UPSERT pod PostgreSQL - bez obsługi kolumn ban_days i ban_start_at
-    $sql = "INSERT INTO accounts (name, amount, end_amount, profit, result) 
-            VALUES (:name, :amount, :end_amount, :profit, :result) 
+    // Pełna składnia UPSERT pod PostgreSQL wraz z obsługą banów
+    $sql = "INSERT INTO accounts (name, amount, end_amount, profit, result, ban_days, ban_start_at) 
+            VALUES (:name, :amount, :end_amount, :profit, :result, :ban_days, :ban_start_at) 
             ON CONFLICT (name) DO UPDATE SET 
                 amount = :amount2, 
                 end_amount = :end_amount2,
                 profit = :profit2, 
-                result = :result2";
+                result = :result2, 
+                ban_days = :ban_days2, 
+                ban_start_at = :ban_start_at2";
             
     $stmt = $pdo->prepare($sql);
     $stmt->execute([
@@ -28,23 +32,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         'end_amount' => $end_amount,
         'profit' => $profit,
         'result' => $result,
+        'ban_days' => $ban_days,
+        'ban_start_at' => $ban_start_at,
         'amount2' => $amount,
         'end_amount2' => $end_amount,
         'profit2' => $profit,
-        'result2' => $result
+        'result2' => $result,
+        'ban_days2' => $ban_days,
+        'ban_start_at2' => $ban_start_at
     ]);
 
-    // Formatowanie wiadomości na Discord bez wzmianki o banach
+    // Formatowanie wiadomości na Discord wraz z informacjami o banie
     $msg = "📝 **Zaktualizowano / Dodano konto w panelu!**\n";
     $msg .= "👤 **Nazwa:** $name\n";
     $msg .= "💰 **Zysk:** $profit PLN ($result)\n";
+    if ($ban_days > 0) {
+        $msg .= "⏱️ **Status:** Nałożono ban na $ban_days dni.";
+    } else {
+        $msg .= "✅ **Status:** Brak bana (Aktywne).";
+    }
 
-    // Wysyłamy powiadomienie do Discorda (funkcja z config.php)
+    // Wysyłamy powiadomienie do Discorda
     if (function_exists('sendDiscordMessage')) {
         sendDiscordMessage($msg);
     }
 
-    // Teraz przekierowanie wykona się prawidłowo, bo nie ma żadnych Warningów wcześniej
     header('Location: index.php');
     exit;
 }
