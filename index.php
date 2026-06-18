@@ -1,8 +1,11 @@
+
+
 <?php
+
 require_once 'cron.php';
 
-// Pobranie danych - posortowane alfabetycznie dla łatwiejszego szukania w tabeli i na wykresie
-$stmt = $pdo->query("SELECT * FROM accounts ORDER BY name ASC");
+// Pobranie danych
+$stmt = $pdo->query("SELECT * FROM accounts ORDER BY id DESC");
 $accounts = $stmt->fetchAll();
 
 // Zmienne do statystyk
@@ -30,6 +33,9 @@ foreach ($accounts as $acc) {
     $chartLabels[] = $acc['name'];
     $chartData[] = $acc['profit'];
 }
+
+$chartLabels = array_reverse($chartLabels);
+$chartData = array_reverse($chartData);
 ?>
 <!DOCTYPE html>
 <html lang="pl">
@@ -81,11 +87,9 @@ foreach ($accounts as $acc) {
             <div class="bg-gray-800 p-6 rounded-2xl shadow-lg border border-gray-700 h-fit">
                 <h2 class="text-xl font-bold mb-4 text-gray-200">Dodaj / Aktualizuj konto</h2>
                 <form id="account-form" action="process.php" method="POST" class="space-y-4">
-                    <input type="hidden" name="custom_date_actual" id="custom-date-actual">
-
                     <div>
                         <label class="block text-xs font-semibold text-gray-400 uppercase mb-1">Nazwa konta</label>
-                        <input type="text" name="name" id="form-name" required class="w-full bg-gray-700 border border-gray-600 rounded-lg p-2.5 text-white focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                        <input type="text" name="name" required class="w-full bg-gray-700 border border-gray-600 rounded-lg p-2.5 text-white focus:ring-2 focus:ring-emerald-500 focus:outline-none">
                     </div>
                     <div class="grid grid-cols-2 gap-4">
                         <div>
@@ -105,7 +109,7 @@ foreach ($accounts as $acc) {
 
                     <div>
                         <label class="block text-xs font-semibold text-gray-400 uppercase mb-1">Wynik</label>
-                        <select name="result" id="form-result" class="w-full bg-gray-700 border border-gray-600 rounded-lg p-2.5 text-white focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                        <select name="result" class="w-full bg-gray-700 border border-gray-600 rounded-lg p-2.5 text-white focus:ring-2 focus:ring-emerald-500 focus:outline-none">
                             <option value="win">WIN (Wygrana)</option>
                             <option value="lose">LOSE (Przegrana)</option>
                         </select>
@@ -120,7 +124,7 @@ foreach ($accounts as $acc) {
                         </select>
                     </div>
 
-                    <div id="custom-date-container" class="hidden bg-gray-900 p-3 rounded-lg border border-gray-700 space-y-1">
+                    <div id="custom-date-container" class="hidden bg-gray-750 p-3 rounded-lg border border-gray-650 space-y-1">
                         <label class="block text-xs font-semibold text-amber-400 uppercase">Kiedy dokładnie kończy się ban?</label>
                         <input type="datetime-local" id="custom-date-input" class="w-full bg-gray-700 border border-gray-600 rounded-lg p-2 text-white focus:ring-2 focus:ring-emerald-500 focus:outline-none">
                     </div>
@@ -133,8 +137,8 @@ foreach ($accounts as $acc) {
 
             <div class="lg:col-span-2 bg-gray-800 p-6 rounded-2xl shadow-lg border border-gray-700 flex flex-col justify-between">
                 <h2 class="text-xl font-bold mb-4 text-gray-200">Wykres Profitu Netto per Konto</h2>
-                <div class="relative w-full overflow-y-auto" style="max-height: 380px; height: 380px;">
-                    <canvas id="profitChart" style="height: <?= max(340, count($accounts) * 25) ?>px;"></canvas>
+                <div class="relative w-full h-64 md:h-full max-h-[340px]">
+                    <canvas id="profitChart"></canvas>
                 </div>
             </div>
         </div>
@@ -142,7 +146,6 @@ foreach ($accounts as $acc) {
         <div class="bg-gray-800 rounded-2xl shadow-lg border border-gray-700 overflow-hidden">
             <div class="p-6 border-b border-gray-700">
                 <h2 class="text-xl font-bold text-gray-200">Lista Kont i Szczegóły</h2>
-                <p class="text-xs text-gray-400 mt-1">Wskazówka: Kliknij w dowolny wiersz konta, aby załadować je do formularza edycji.</p>
             </div>
             <div class="overflow-x-auto">
                 <table class="w-full text-left border-collapse">
@@ -162,8 +165,7 @@ foreach ($accounts as $acc) {
                             <tr><td colspan="7" class="p-8 text-center text-gray-500">Brak danych w bazie cs. Dodaj swoje pierwsze konto.</td></tr>
                         <?php else: ?>
                             <?php foreach ($accounts as $index => $acc): ?>
-                                <tr class="hover:bg-gray-700/60 odd:bg-gray-800/50 even:bg-gray-750/30 cursor-pointer" 
-                                    onclick="populateForm(<?= htmlspecialchars(json_encode($acc)) ?>)">
+                                <tr class="hover:bg-gray-750 transition-colors">
                                     <td class="p-4 font-medium text-gray-200"><?= htmlspecialchars($acc['name']) ?></td>
                                     <td class="p-4 text-gray-400"><?= number_format($acc['amount'], 2, ',', ' ') ?> PLN</td>
                                     <td class="p-4 text-amber-400 font-semibold"><?= number_format($acc['end_amount'], 2, ',', ' ') ?> PLN</td>
@@ -193,12 +195,12 @@ foreach ($accounts as $acc) {
                                             <span class="px-2.5 py-1 text-xs font-medium bg-emerald-500/10 text-emerald-400 rounded-full border border-emerald-500/20">Brak Blokady</span>
                                         <?php endif; ?>
                                     </td>
-                                   </td>
-    <td class="p-4 text-right" onclick="event.stopPropagation();">
-        <a href="process.php?action=delete&id=<?= $acc['id'] ?>" onclick="return confirm('Usunąć konto <?= htmlspecialchars($acc['name']) ?>?')" class="text-red-400 hover:text-red-300 font-semibold text-sm transition">Usuń</a>
-    </td>
-</tr>
-<?php endforeach; ?> <?php endif; ?>
+                                    <td class="p-4 text-right">
+                                        <a href="process.php?action=delete&id=<?= $acc['id'] ?>" onclick="return confirm('Usunąć konto <?= htmlspecialchars($acc['name']) ?>?')" class="text-red-400 hover:text-red-300 font-semibold text-sm transition">Usuń</a>
+                                    </td>
+                                </tr>
+                            <?php endforeach; ?>
+                        <?php endif; ?>
                     </tbody>
                 </table>
             </div>
@@ -207,22 +209,6 @@ foreach ($accounts as $acc) {
     </div>
 
     <script>
-        // FUNKCJA AUTOMATYCZNEGO UZUPEŁNIANIA FORMULARZA PO KLIKNIĘCIU W WIERSZ
-        function populateForm(acc) {
-            document.getElementById('form-name').value = acc.name;
-            document.getElementById('input-amount').value = acc.amount;
-            document.getElementById('input-end').value = acc.end_amount;
-            document.getElementById('form-result').value = acc.result;
-            
-            // Resetujemy select banów przy edycji dla bezpieczeństwa
-            document.getElementById('ban-days-select').value = "0";
-            toggleCustomDateInput();
-            calculateLiveProfit();
-            
-            // Przewiń ekran do formularza na urządzeniach mobilnych
-            document.getElementById('account-form').scrollIntoView({ behavior: 'smooth', block: 'center' });
-        }
-
         // POKAZYWANIE / UKRYWANIE KALENDARZA DLA WŁASNEJ DATY
         function toggleCustomDateInput() {
             const select = document.getElementById('ban-days-select');
@@ -238,11 +224,9 @@ foreach ($accounts as $acc) {
             }
         }
 
-        // PRZELICZANIE KALENDARZA I PRZEKAZANIE WARTOŚCI DO UKRYTEGO INPUTA
+        // PRZELICZANIE KALENDARZA NA DNI PRZED WYSŁANIEM FORMULARZA
         document.getElementById('account-form').addEventListener('submit', function(e) {
             const select = document.getElementById('ban-days-select');
-            const hiddenInput = document.getElementById('custom-date-actual');
-            
             if (select.value === 'custom') {
                 const customDateVal = document.getElementById('custom-date-input').value;
                 if (!customDateVal) {
@@ -253,16 +237,17 @@ foreach ($accounts as $acc) {
 
                 const targetDate = new Date(customDateVal);
                 const now = new Date();
-                if (targetDate <= now) {
+                const diffMs = targetDate - now;
+                const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+
+                if (diffDays <= 0) {
                     e.preventDefault();
                     alert('Wybrana data zakończenia bana musi być w przyszłości!');
                     return;
                 }
 
-                // Zapisujemy pełną wybraną datę do ukrytego pola tekstowego
-                hiddenInput.value = customDateVal;
-            } else {
-                hiddenInput.value = "";
+                // Podmieniamy wartość "custom" na wyliczone dni tuż przed wysłaniem do process.php
+                select.options[select.selectedIndex].value = diffDays;
             }
         });
 
@@ -334,7 +319,7 @@ foreach ($accounts as $acc) {
         setInterval(updateBanTimers, 1000);
         updateBanTimers();
 
-        // CHART (POPRAWIONY WYKRES POZIOMY)
+        // CHART (WYKRES)
         const ctx = document.getElementById('profitChart').getContext('2d');
         const chartLabels = <?php echo json_encode($chartLabels); ?>;
         const chartData = <?php echo json_encode($chartData); ?>;
@@ -346,28 +331,24 @@ foreach ($accounts as $acc) {
                 datasets: [{
                     label: 'Zysk Netto (PLN)',
                     data: chartData,
-                    backgroundColor: chartData.map(val => val >= 0 ? 'rgba(52, 211, 153, 0.2)' : 'rgba(248, 113, 113, 0.2)'),
-                    borderColor: chartData.map(val => val >= 0 ? 'rgba(52, 211, 153, 1)' : 'rgba(248, 113, 113, 1)'),
+                    backgroundColor: 'rgba(52, 211, 153, 0.2)',
+                    borderColor: 'rgba(52, 211, 153, 1)',
                     borderWidth: 2,
-                    borderRadius: 4
+                    borderRadius: 6
                 }]
             },
             options: {
-                indexAxis: 'y', // Zamiana wykresu na POZIOMY
                 responsive: true,
                 maintainAspectRatio: false,
                 plugins: { legend: { display: false } },
                 scales: {
-                    x: {
-                        grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                    y: {
+                        grid: { color: 'rgba(255, 255, 255, 0.1)' },
                         ticks: { color: '#9ca3af' }
                     },
-                    y: {
+                    x: {
                         grid: { display: false },
-                        ticks: { 
-                            color: '#9ca3af',
-                            autoSkip: false // Wymusza pokazywanie każdej nazwy konta
-                        }
+                        ticks: { color: '#9ca3af' }
                     }
                 }
             }
