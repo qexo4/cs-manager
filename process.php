@@ -5,7 +5,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $name = trim($_POST['name']);
     $amount = floatval($_POST['amount']);
     $end_amount = floatval($_POST['end_amount']);
-    $result = $_POST['result'];
+    $result = trim($_POST['result']);
     $ban_days = intval($_POST['ban_days']); // Przywrócono pobieranie liczby dni bana
     
     // AUTOMATYCZNE OBLICZANIE ZYSKU: Koniec - Kwota
@@ -14,14 +14,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Jeśli wybrano ban > 0 dni, zapisujemy aktualny czas jako start bana
     $ban_start_at = $ban_days > 0 ? date('Y-m-d H:i:s') : null;
 
-    // Pełna składnia UPSERT pod PostgreSQL wraz z obsługą banów i SUMOWANIEM ZYSKU
+    // Pełna składnia UPSERT pod PostgreSQL z sumowaniem zysku i dopisywaniem wyniku po przecinku
     $sql = "INSERT INTO accounts (name, amount, end_amount, profit, result, ban_days, ban_start_at) 
             VALUES (:name, :amount, :end_amount, :profit, :result, :ban_days, :ban_start_at) 
             ON CONFLICT (name) DO UPDATE SET 
                 amount = :amount2, 
                 end_amount = :end_amount2,
-                profit = accounts.profit + EXCLUDED.profit, -- TUTAJ: Dodajemy stary zysk do nowego zysku
-                result = :result2, 
+                profit = accounts.profit + EXCLUDED.profit, -- Sumowanie zysku
+                result = accounts.result || ', ' || EXCLUDED.result, -- Dopisywanie wyniku po przecinku (np. win, lose, remis)
                 ban_days = :ban_days2, 
                 ban_start_at = :ban_start_at2";
             
@@ -36,15 +36,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         'ban_start_at' => $ban_start_at,
         'amount2' => $amount,
         'end_amount2' => $end_amount,
-        'result2' => $result,
         'ban_days2' => $ban_days,
         'ban_start_at2' => $ban_start_at
     ]);
 
+    // Tłumaczenie wyniku na ładny polski tekst do wiadomości Discord
+    $pl_result = $result;
+    if ($result === 'win') $pl_result = 'Wygrana (win)';
+    if ($result === 'lose') $pl_result = 'Przegrana (lose)';
+    if ($result === 'remis') $pl_result = 'Remis';
+
     // Formatowanie wiadomości na Discord wraz z informacjami o banie
     $msg = "📝 **Zaktualizowano / Dodano konto w panelu!**\n";
     $msg .= "👤 **Nazwa:** $name\n";
-    $msg .= "💰 **Zysk z tej sesji:** $profit PLN ($result)\n";
+    $msg .= "💰 **Zysk z tej sesji:** $profit PLN ($pl_result)\n";
     if ($ban_days > 0) {
         $msg .= "⏱️ **Status:** Nałożono ban na $ban_days dni.";
     } else {
