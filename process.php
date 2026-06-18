@@ -14,13 +14,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Jeśli wybrano ban > 0 dni, zapisujemy aktualny czas jako start bana
     $ban_start_at = $ban_days > 0 ? date('Y-m-d H:i:s') : null;
 
-    // Pełna składnia UPSERT pod PostgreSQL wraz z obsługą banów
+    // Pełna składnia UPSERT pod PostgreSQL wraz z obsługą banów i SUMOWANIEM ZYSKU
     $sql = "INSERT INTO accounts (name, amount, end_amount, profit, result, ban_days, ban_start_at) 
             VALUES (:name, :amount, :end_amount, :profit, :result, :ban_days, :ban_start_at) 
             ON CONFLICT (name) DO UPDATE SET 
                 amount = :amount2, 
                 end_amount = :end_amount2,
-                profit = :profit2, 
+                profit = accounts.profit + EXCLUDED.profit, -- TUTAJ: Dodajemy stary zysk do nowego zysku
                 result = :result2, 
                 ban_days = :ban_days2, 
                 ban_start_at = :ban_start_at2";
@@ -36,7 +36,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         'ban_start_at' => $ban_start_at,
         'amount2' => $amount,
         'end_amount2' => $end_amount,
-        'profit2' => $profit,
         'result2' => $result,
         'ban_days2' => $ban_days,
         'ban_start_at2' => $ban_start_at
@@ -45,7 +44,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Formatowanie wiadomości na Discord wraz z informacjami o banie
     $msg = "📝 **Zaktualizowano / Dodano konto w panelu!**\n";
     $msg .= "👤 **Nazwa:** $name\n";
-    $msg .= "💰 **Zysk:** $profit PLN ($result)\n";
+    $msg .= "💰 **Zysk z tej sesji:** $profit PLN ($result)\n";
     if ($ban_days > 0) {
         $msg .= "⏱️ **Status:** Nałożono ban na $ban_days dni.";
     } else {
