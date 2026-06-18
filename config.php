@@ -3,7 +3,7 @@
 // 1. DANE POŁĄCZENIOWE DO BAZY POSTGRESQL (SUPABASE IPV4 POOLER)
 // =========================================================================
 $host = 'aws-0-eu-west-1.pooler.supabase.com'; 
-$port = '6543';                                
+$port = '5432';                                
 $user = 'postgres.gspabzptmmwboauxwvip';       
 $pass = 'ZXC123asd!@#1';                       
 $db   = 'postgres';
