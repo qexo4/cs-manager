@@ -34,5 +34,5 @@ foreach ($accounts as $acc) {
         echo "Sukces: Odbanowano konto i wysłano powiadomienie: " . $acc['name'] . "\n";
     }
 }
-echo "Skrypt cron zakończony powodzeniem.\n";
+
 ?>
