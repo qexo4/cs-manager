@@ -193,12 +193,12 @@ foreach ($accounts as $acc) {
                                             <span class="px-2.5 py-1 text-xs font-medium bg-emerald-500/10 text-emerald-400 rounded-full border border-emerald-500/20">Brak Blokady</span>
                                         <?php endif; ?>
                                     </td>
-                                    <td class="p-4 text-right" onclick="event.stopPropagation();">
-                                        <a href="process.php?action=delete&id=<?= $acc['id'] ?>" onclick="return confirm('Usunąć konto <?= htmlspecialchars($acc['name']) ?>?')" class="text-red-400 hover:text-red-300 font-semibold text-sm transition">Usuń</a>
-                                    </td>
-                                </tr>
-                            <?php foreach ($accounts as $index => $acc): ?>
-                        <?php endif; ?>
+                                   </td>
+    <td class="p-4 text-right" onclick="event.stopPropagation();">
+        <a href="process.php?action=delete&id=<?= $acc['id'] ?>" onclick="return confirm('Usunąć konto <?= htmlspecialchars($acc['name']) ?>?')" class="text-red-400 hover:text-red-300 font-semibold text-sm transition">Usuń</a>
+    </td>
+</tr>
+<?php endforeach; ?> <?php endif; ?>
                     </tbody>
                 </table>
             </div>
