@@ -1,7 +1,5 @@
 <?php
-// Najpierw ładujemy konfigurację, aby załadować funkcję sendDiscordMessage
 require_once 'config.php';
-
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $name = trim($_POST['name']);
@@ -16,13 +14,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Jeśli wybrano ban > 0 dni, zapisujemy aktualny czas jako start bana
     $ban_start_at = $ban_days > 0 ? date('Y-m-d H:i:s') : null;
 
-    // Poprawna składnia UPSERT (sumowanie zysków)
+    // Składnia UPSERT dostosowana pod PostgreSQL (ON CONFLICT)
     $sql = "INSERT INTO accounts (name, amount, end_amount, profit, result, ban_days, ban_start_at) 
             VALUES (:name, :amount, :end_amount, :profit, :result, :ban_days, :ban_start_at) 
             ON CONFLICT (name) DO UPDATE SET 
-                amount = accounts.amount + :amount2, 
-                end_amount = accounts.end_amount + :end_amount2,
-                profit = accounts.profit + :profit2, 
+                amount = :amount2, 
+                end_amount = :end_amount2,
+                profit = :profit2, 
                 result = :result2, 
                 ban_days = :ban_days2, 
                 ban_start_at = :ban_start_at2";
@@ -44,7 +42,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         'ban_start_at2' => $ban_start_at
     ]);
 
-    // Formatowanie wiadomości na Discord
+    // Przygotowanie ładnej tekstowej wiadomości dla Discorda
     $msg = "📝 **Zaktualizowano / Dodano konto w panelu!**\n";
     $msg .= "👤 **Nazwa:** $name\n";
     $msg .= "💰 **Zysk:** $profit PLN ($result)\n";
@@ -54,7 +52,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $msg .= "✅ **Status:** Brak bana (Aktywne).";
     }
 
-    // Wysyłka powiadomienia
+    // Wywołanie funkcji z config.php
     if (function_exists('sendDiscordMessage')) {
         sendDiscordMessage($msg);
     }
