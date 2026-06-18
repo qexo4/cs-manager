@@ -1,11 +1,11 @@
 <?php
 // =========================================================================
-// 1. DANE POŁĄCZENIOWE DO BAZY POSTGRESQL (SUPABASE)
+// 1. DANE POŁĄCZENIOWE DO BAZY POSTGRESQL (SUPABASE - POOLER IPv4)
 // =========================================================================
-$host = 'db.gspabzptmmwboauxwvip.supabase.co';
-$port = '5432';
-$user = 'postgres';
-$pass = 'ZXC123asd!@#1'; // <-- Wpisz tutaj hasło ustawione podczas rejestracji
+$host = 'aws-0-eu-west-1.pooler.supabase.com'; // Serwer pośredniczący IPv4
+$port = '6543';                                // Port dla poolera Supabase
+$user = 'postgres.gspabzptmmwboauxwvip';       // Specjalny login użytkownika dla projektu
+$pass = 'ZXC123asd!@#1 '; // <-- Wpisz tutaj swoje hasło do bazy danych
 $db   = 'postgres';
 
 $dsn = "pgsql:host=$host;port=$port;dbname=$db";
