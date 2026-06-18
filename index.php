@@ -1,8 +1,8 @@
-
-
 <?php
+// Usunięto: require_once 'cron.php'; - skrypt nie odpala już automatycznie sprawdzania banów
 
-require_once 'cron.php';
+// Pobranie danych z konfiguracji bazy danych
+require_once 'config.php'; 
 
 // Pobranie danych
 $stmt = $pdo->query("SELECT * FROM accounts ORDER BY id DESC");
@@ -56,7 +56,7 @@ $chartData = array_reverse($chartData);
                 <p class="text-gray-400 text-sm">Baza danych: <span class="text-emerald-500 font-semibold">cs</span></p>
             </div>
             
-            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 pt-2">
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 pt-2">
                 <div class="bg-gray-700/40 p-4 rounded-xl border border-gray-600">
                     <p class="text-xs text-gray-400 uppercase font-semibold">Liczba Kont</p>
                     <p class="text-2xl font-bold text-blue-400"><?= $totalAccounts ?></p>
@@ -75,11 +75,7 @@ $chartData = array_reverse($chartData);
                         <span class="text-emerald-400"><?= $winsCount ?> W</span> <span class="text-gray-500">/</span> <span class="text-red-400"><?= $lossesCount ?> L</span>
                     </p>
                 </div>
-                <div class="bg-gray-700/40 p-4 rounded-xl border border-gray-600 col-span-2 md:col-span-1">
-                    <p class="text-xs text-gray-400 uppercase font-semibold text-amber-400 font-bold">Najbliższy Unban</p>
-                    <p id="top-shortest-ban" class="text-base font-bold text-gray-300 mt-1 break-all">Obliczanie...</p>
                 </div>
-            </div>
         </header>
 
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -114,20 +110,6 @@ $chartData = array_reverse($chartData);
                             <option value="lose">LOSE (Przegrana)</option>
                         </select>
                     </div>
-                    <div>
-                        <label class="block text-xs font-semibold text-gray-400 uppercase mb-1">Długość bana</label>
-                        <select name="ban_days" id="ban-days-select" class="w-full bg-gray-700 border border-gray-600 rounded-lg p-2.5 text-white focus:ring-2 focus:ring-emerald-500 focus:outline-none" onchange="toggleCustomDateInput()">
-                            <option value="0">Brak bana (Aktywne)</option>
-                            <option value="8">8 dni</option>
-                            <option value="30">30 dni</option>
-                            <option value="custom">Własna data (Wybierz z kalendarza)...</option>
-                        </select>
-                    </div>
-
-                    <div id="custom-date-container" class="hidden bg-gray-750 p-3 rounded-lg border border-gray-650 space-y-1">
-                        <label class="block text-xs font-semibold text-amber-400 uppercase">Kiedy dokładnie kończy się ban?</label>
-                        <input type="datetime-local" id="custom-date-input" class="w-full bg-gray-700 border border-gray-600 rounded-lg p-2 text-white focus:ring-2 focus:ring-emerald-500 focus:outline-none">
-                    </div>
 
                     <button type="submit" class="w-full bg-emerald-500 hover:bg-emerald-600 text-gray-900 font-bold p-3 rounded-lg transition duration-200 cursor-pointer">
                         Zatwierdź i Zapisz
@@ -156,13 +138,12 @@ $chartData = array_reverse($chartData);
                             <th class="p-4">Koniec (Finał)</th>
                             <th class="p-4">Zysk (Netto)</th>
                             <th class="p-4">Wynik</th>
-                            <th class="p-4">Status / Czas do końca bana</th>
                             <th class="p-4 text-right">Akcje</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-700">
                         <?php if (empty($accounts)): ?>
-                            <tr><td colspan="7" class="p-8 text-center text-gray-500">Brak danych w bazie cs. Dodaj swoje pierwsze konto.</td></tr>
+                            <tr><td colspan="6" class="p-8 text-center text-gray-500">Brak danych w bazie cs. Dodaj swoje pierwsze konto.</td></tr>
                         <?php else: ?>
                             <?php foreach ($accounts as $index => $acc): ?>
                                 <tr class="hover:bg-gray-750 transition-colors">
@@ -179,22 +160,6 @@ $chartData = array_reverse($chartData);
                                             <span class="px-2.5 py-1 text-xs font-bold bg-red-500/10 text-red-400 rounded-full border border-red-500/20">LOSE</span>
                                         <?php endif; ?>
                                     </td>
-                                    <td class="p-4">
-                                        <?php if ($acc['ban_days'] > 0 && $acc['ban_start_at']): ?>
-                                            <?php 
-                                            $startTimeMs = strtotime($acc['ban_start_at']) * 1000;
-                                            $banDays = $acc['ban_days'];
-                                            ?>
-                                            <span id="timer-<?= $index ?>" class="ban-countdown px-2.5 py-1 text-xs font-medium bg-red-500/10 text-red-400 rounded-full border border-red-500/20" 
-                                                  data-start="<?= $startTimeMs ?>" 
-                                                  data-days="<?= $banDays ?>"
-                                                  data-name="<?= htmlspecialchars($acc['name']) ?>">
-                                                Obliczanie...
-                                            </span>
-                                        <?php else: ?>
-                                            <span class="px-2.5 py-1 text-xs font-medium bg-emerald-500/10 text-emerald-400 rounded-full border border-emerald-500/20">Brak Blokady</span>
-                                        <?php endif; ?>
-                                    </td>
                                     <td class="p-4 text-right">
                                         <a href="process.php?action=delete&id=<?= $acc['id'] ?>" onclick="return confirm('Usunąć konto <?= htmlspecialchars($acc['name']) ?>?')" class="text-red-400 hover:text-red-300 font-semibold text-sm transition">Usuń</a>
                                     </td>
@@ -209,47 +174,7 @@ $chartData = array_reverse($chartData);
     </div>
 
     <script>
-        // POKAZYWANIE / UKRYWANIE KALENDARZA DLA WŁASNEJ DATY
-        function toggleCustomDateInput() {
-            const select = document.getElementById('ban-days-select');
-            const container = document.getElementById('custom-date-container');
-            const input = document.getElementById('custom-date-input');
-            
-            if (select.value === 'custom') {
-                container.classList.remove('hidden');
-                input.setAttribute('required', 'required');
-            } else {
-                container.classList.add('hidden');
-                input.removeAttribute('required');
-            }
-        }
-
-        // PRZELICZANIE KALENDARZA NA DNI PRZED WYSŁANIEM FORMULARZA
-        document.getElementById('account-form').addEventListener('submit', function(e) {
-            const select = document.getElementById('ban-days-select');
-            if (select.value === 'custom') {
-                const customDateVal = document.getElementById('custom-date-input').value;
-                if (!customDateVal) {
-                    e.preventDefault();
-                    alert('Proszę wybrać datę i godzinę zakończenia bana!');
-                    return;
-                }
-
-                const targetDate = new Date(customDateVal);
-                const now = new Date();
-                const diffMs = targetDate - now;
-                const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
-
-                if (diffDays <= 0) {
-                    e.preventDefault();
-                    alert('Wybrana data zakończenia bana musi być w przyszłości!');
-                    return;
-                }
-
-                // Podmieniamy wartość "custom" na wyliczone dni tuż przed wysłaniem do process.php
-                select.options[select.selectedIndex].value = diffDays;
-            }
-        });
+        // Usunięto funkcje toggleCustomDateInput oraz logikę przeliczania kalendarza przy submit
 
         // LIVE OBLICZANIE ZYSKU W FORMULARZU
         const inputAmount = document.getElementById('input-amount');
@@ -272,52 +197,7 @@ $chartData = array_reverse($chartData);
         inputAmount.addEventListener('input', calculateLiveProfit);
         inputEnd.addEventListener('input', calculateLiveProfit);
 
-        // LIVE COUNTDOWN BANA + AKTUALIZACJA GÓRNEGO KAFELKA
-        function updateBanTimers() {
-            const now = Date.now();
-            let shortestTime = Infinity;
-            let shortestLabel = "";
-            
-            document.querySelectorAll('.ban-countdown').forEach((timerEl) => {
-                const startTime = parseInt(timerEl.getAttribute('data-start'));
-                const banDays = parseInt(timerEl.getAttribute('data-days'));
-                const accName = timerEl.getAttribute('data-name');
-                const endTime = startTime + (banDays * 24 * 60 * 60 * 1000);
-                const timeLeft = endTime - now;
-
-                if (timeLeft <= 0) {
-                    timerEl.innerHTML = "Ban minął!";
-                    timerEl.className = "px-2.5 py-1 text-xs font-medium bg-amber-500/10 text-amber-400 rounded-full border border-amber-500/20";
-                } else {
-                    const days = Math.floor(timeLeft / (1000 * 60 * 60 * 24));
-                    const hours = Math.floor((timeLeft % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-                    const minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
-                    const seconds = Math.floor((timeLeft % (1000 * 60)) / 1000);
-
-                    let label = "";
-                    if (days > 0) label += `${days}d `;
-                    label += `${hours}h ${minutes}m ${seconds}s`;
-
-                    timerEl.innerHTML = `Zostało: ${label} (${banDays} dni)`;
-
-                    if (timeLeft < shortestTime) {
-                        shortestTime = timeLeft;
-                        shortestLabel = `${accName} (${label})`;
-                    }
-                }
-            });
-
-            const topBox = document.getElementById('top-shortest-ban');
-            if (shortestTime === Infinity) {
-                topBox.innerText = "Brak blokad";
-                topBox.className = "text-xl font-bold text-emerald-400 mt-1";
-            } else {
-                topBox.innerText = shortestLabel;
-                topBox.className = "text-base font-bold text-amber-400 mt-1 break-all";
-            }
-        }
-        setInterval(updateBanTimers, 1000);
-        updateBanTimers();
+        // Usunięto funkcję updateBanTimers oraz setInterval (odliczanie banów wyłączone)
 
         // CHART (WYKRES)
         const ctx = document.getElementById('profitChart').getContext('2d');
