@@ -13,6 +13,7 @@ $totalEndAmount = 0;
 $totalProfit = 0;
 $winsCount = 0;
 $lossesCount = 0;
+$remisCount = 0; // Dodano zliczanie remisów
 
 $chartLabels = [];
 $chartData = [];
@@ -22,10 +23,17 @@ foreach ($accounts as $acc) {
     $totalEndAmount += $acc['end_amount'];
     $totalProfit += $acc['profit'];
     
-    if ($acc['result'] === 'win') {
-        $winsCount++;
-    } else {
-        $lossesCount++;
+    // Zliczanie statystyk ogólnych na podstawie całej historii w polu 'result'
+    $currentResults = explode(',', $acc['result']);
+    foreach ($currentResults as $res) {
+        $resTrimmed = trim($res);
+        if ($resTrimmed === 'win') {
+            $winsCount++;
+        } elseif ($resTrimmed === 'lose') {
+            $lossesCount++;
+        } elseif ($resTrimmed === 'remis') {
+            $remisCount++;
+        }
     }
 
     $chartLabels[] = $acc['name'];
@@ -69,8 +77,12 @@ $chartData = array_reverse($chartData);
                 </div>
                 <div class="bg-gray-700/40 p-4 rounded-xl border border-gray-600">
                     <p class="text-xs text-gray-400 uppercase font-semibold">Wyniki ogólne</p>
-                    <p class="text-2xl font-bold text-gray-200">
-                        <span class="text-emerald-400"><?= $winsCount ?> W</span> <span class="text-gray-500">/</span> <span class="text-red-400"><?= $lossesCount ?> L</span>
+                    <p class="text-xl font-bold text-gray-200 mt-1">
+                        <span class="text-emerald-400"><?= $winsCount ?> W</span> 
+                        <span class="text-gray-500">/</span> 
+                        <span class="text-amber-400"><?= $remisCount ?> R</span> 
+                        <span class="text-gray-500">/</span> 
+                        <span class="text-red-400"><?= $lossesCount ?> L</span>
                     </p>
                 </div>
                 <div class="bg-gray-700/40 p-4 rounded-xl border border-gray-600 col-span-2 md:col-span-1">
@@ -109,6 +121,7 @@ $chartData = array_reverse($chartData);
                         <label class="block text-xs font-semibold text-gray-400 uppercase mb-1">Wynik</label>
                         <select name="result" class="w-full bg-gray-700 border border-gray-600 rounded-lg p-2.5 text-white focus:ring-2 focus:ring-emerald-500 focus:outline-none">
                             <option value="win">WIN (Wygrana)</option>
+                            <option value="remis">REMIS (Remis)</option>
                             <option value="lose">LOSE (Przegrana)</option>
                         </select>
                     </div>
@@ -171,12 +184,20 @@ $chartData = array_reverse($chartData);
                                     <td class="p-4 <?= $acc['profit'] >= 0 ? 'text-emerald-400' : 'text-rose-400' ?> font-bold">
                                         <?= number_format($acc['profit'], 2, ',', ' ') ?> PLN
                                     </td>
-                                    <td class="p-4">
-                                        <?php if ($acc['result'] === 'win'): ?>
-                                            <span class="px-2.5 py-1 text-xs font-bold bg-emerald-500/10 text-emerald-400 rounded-full border border-emerald-500/20">WIN</span>
-                                        <?php else: ?>
-                                            <span class="px-2.5 py-1 text-xs font-bold bg-red-500/10 text-red-400 rounded-full border border-red-500/20">LOSE</span>
-                                        <?php endif; ?>
+                                    <td class="p-4 flex flex-wrap gap-1">
+                                        <?php 
+                                        // Dynamiczne generowanie estetycznych odznak dla historii wyników konta
+                                        $history = explode(',', $acc['result']);
+                                        foreach ($history as $hItem): 
+                                            $hItem = trim($hItem);
+                                            if ($hItem === 'win'): ?>
+                                                <span class="px-2 py-0.5 text-[10px] font-bold bg-emerald-500/10 text-emerald-400 rounded border border-emerald-500/20">WIN</span>
+                                            <?php elseif ($hItem === 'remis'): ?>
+                                                <span class="px-2 py-0.5 text-[10px] font-bold bg-amber-500/10 text-amber-400 rounded border border-amber-500/20">REMIS</span>
+                                            <?php elseif ($hItem === 'lose'): ?>
+                                                <span class="px-2 py-0.5 text-[10px] font-bold bg-red-500/10 text-red-400 rounded border border-red-500/20">LOSE</span>
+                                            <?php endif; ?>
+                                        <?php endforeach; ?>
                                     </td>
                                     <td class="p-4">
                                         <?php if ($acc['ban_days'] > 0 && $acc['ban_start_at']): ?>
@@ -208,7 +229,7 @@ $chartData = array_reverse($chartData);
     </div>
 
     <script>
-        // PRZYWRÓCONO: Pokazywanie i ukrywanie kalendarza
+        // Pokazywanie i ukrywanie kalendarza
         function toggleCustomDateInput() {
             const select = document.getElementById('ban-days-select');
             const container = document.getElementById('custom-date-container');
@@ -223,7 +244,7 @@ $chartData = array_reverse($chartData);
             }
         }
 
-        // PRZYWRÓCONO: Przeliczanie kalendarza na dni przed wysłaniem formularza
+        // Przeliczanie kalendarza na dni przed wysłaniem formularza
         document.getElementById('account-form').addEventListener('submit', function(e) {
             const select = document.getElementById('ban-days-select');
             if (select.value === 'custom') {
