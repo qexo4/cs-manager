@@ -1,6 +1,7 @@
 <?php
-// Dane połączeniowe do bazy PostgreSQL
-$dbUrl = 'postgresql://sc2_user:wXGoNehFbduj2j6wSlJqkWrfkbMTPrOY@dpg-d8hfpme47okc738jnjt0-a/sc2';
+// Dane połączeniowe do bazy PostgreSQL zaktualizowane pod Supabase
+$dbUrl = 'postgresql://postgres:ZXC123asd!@#1@db.gspabzptmmwboauxwvip.supabase.co:5432/postgres';
+
 $dbopts = parse_url($dbUrl);
 $host = $dbopts["host"];
 $port = isset($dbopts["port"]) ? $dbopts["port"] : "5432";
@@ -25,7 +26,7 @@ try {
  * Wysyła sformatowaną wiadomość na Discord za pomocą Webhooka
  */
 function sendDiscordMessage($message) {
-    // Twój NOWY link podany w zgłoszeniu
+    // Twój link podany w zgłoszeniu
     $webhookUrl = "https://discord.com/api/webhooks/1512507843801124876/JB3O32EtcgKbUmBDjnTY9kJAmszKY7oIVS9FLin6bKsEsPZOmN1fxGZeJ_XT2xIUucNb";
 
     $json_data = json_encode([
