@@ -1,46 +1,37 @@
 <?php
-$dbUrl = 'postgresql://sc2_user:wXGoNehFbduj2j6wSlJqkWrfkbMTPrOY@dpg-d8hfpme47okc738jnjt0-a/sc2';
-$dbopts = parse_url($dbUrl);
-$host = $dbopts["host"];
-$port = isset($dbopts["port"]) ? $dbopts["port"] : "5432";
-$user = $dbopts["user"];
-$pass = $dbopts["pass"];
-$db   = ltrim($dbopts["path"], '/');
-$dsn = "pgsql:host=$host;port=$port;dbname=$db";
-$options = [
-    PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-    PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-    PDO::ATTR_EMULATE_PREPARES => false,
-];
+require_once 'config.php';
 
-try {
-     $pdo = new PDO($dsn, $user, $pass, $options);
-} catch (\PDOException $e) {
-     die("Błąd połączenia: " . $e->getMessage());
-}
+// Pobieramy wszystkie konta, które mają jeszcze aktywnego bana
+$stmt = $pdo->query("SELECT * FROM accounts WHERE ban_days > 0 AND ban_start_at IS NOT NULL");
+$accounts = $stmt->fetchAll();
 
-function sendDiscordMessage($message) {
-    // TWÓJ NOWY LINK
-    $webhookUrl = "https://discord.com/api/webhooks/1516845357148012584/cQvSxqpuqDWjWS8-y_J7lRlXXMezqF0n-UfklpSdsrb-zLlj_RcY4jVaQOScsPGtP958";
+$now = new DateTime();
 
-    $json_data = json_encode([
-        "content" => $message,
-        "username" => "CS-Manager Bot",
-        "tts" => false
-    ], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
-
-    $ch = curl_init($webhookUrl);
-    curl_setopt($ch, CURLOPT_HTTPHEADER, array('Content-Type: application/json', 'User-Agent: PHP-Script'));
-    curl_setopt($ch, CURLOPT_POST, 1);
-    curl_setopt($ch, CURLOPT_POSTFIELDS, $json_data);
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-    curl_setopt($ch, CURLOPT_TIMEOUT, 10);
+foreach ($accounts as $acc) {
+    $banStart = new DateTime($acc['ban_start_at']);
+    $banDays = $acc['ban_days'];
     
-    $response = curl_exec($ch);
-    $error = curl_error($ch);
-    curl_close($ch);
+    // Obliczamy datę, kiedy ban się kończy
+    $banEnd = clone $banStart;
+    $banEnd->modify("+$banDays days");
     
-    if ($error) error_log("Błąd cURL: " . $error);
-    return $response;
+    // Jeśli aktualny czas jest WIĘKSZY lub RÓWNY dacie końca bana -> UNBAN!
+    if ($now >= $banEnd) {
+        // Aktualizujemy konto w bazie danych (czyszczenie bana)
+        $updateStmt = $pdo->prepare("UPDATE accounts SET ban_days = 0, ban_start_at = NULL WHERE id = ?");
+        $updateStmt->execute([$acc['id']]);
+        
+        // Wysyłamy powiadomienie o końcu bana na Discorda!
+        $msg = "🎉 🔔 **KONIEC BANA!**\n";
+        $msg .= "👤 Użytkownik **{$acc['name']}** został właśnie odbanowany automatycznie!\n";
+        $msg .= "✅ Konto jest ponownie gotowe do działań.";
+        
+        if (function_exists('sendDiscordMessage')) {
+            sendDiscordMessage($msg);
+        }
+        
+        echo "Odbanowano: " . $acc['name'] . "\n";
+    }
 }
+echo "Cron wykonany pomyślnie.";
 ?>
