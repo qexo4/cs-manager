@@ -6,7 +6,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $amount = floatval($_POST['amount']);
     $end_amount = floatval($_POST['end_amount']);
     $result = $_POST['result'];
-    $ban_selection = $_POST['ban_days']; // może być liczbą tekstową lub "custom"
+    $ban_selection = $_POST['ban_days']; 
     
     // Obliczenie profitu
     $profit = $end_amount - $amount;
@@ -16,22 +16,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $ban_days = 0;
         $ban_start_at = null;
     } else {
-        // Jeśli użytkownik użył kalendarza (własna data)
-        if (isset($_POST['custom_date_actual']) && !empty($_POST['custom_date_actual'])) {
+        // NAPRAWIONE: Teraz poprawnie sprawdzamy wartość z ukrytego pola tekstowego przysłanego z formularza
+        if ($ban_selection === 'custom' && isset($_POST['custom_date_actual']) && !empty($_POST['custom_date_actual'])) {
             $targetDate = new DateTime($_POST['custom_date_actual']);
             $now = new DateTime();
             
             // Liczymy precyzyjną różnicę czasu
-            $diff = $now->diff($targetDate);
-            // Wyliczamy dni w ujęciu zmiennoprzecinkowym lub zaokrąglamy w górę
-            $ban_days = ceil(($targetDate->getTimestamp() - $now->getTimestamp()) / (60 * 60 * 24));
+            $diffSeconds = $targetDate->getTimestamp() - $now->getTimestamp();
+            $ban_days = ceil($diffSeconds / (60 * 60 * 24));
             
             if ($ban_days <= 0) {
-                $ban_days = 1; // Zabezpieczenie minimalne
+                $ban_days = 1; 
             }
             
-            // Ustawiamy start bana jako punkt wsteczny tak, aby dokładnie zgadzał się z końcem!
-            // To trik gwarantujący, że ban_start_at + ban_days da idealnie wybraną datę z kalendarza.
             $ban_start_at = $now->format('Y-m-d H:i:s');
         } else {
             // Standardowy wybór: 8 lub 30 dni od teraz
