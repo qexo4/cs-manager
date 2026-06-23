@@ -52,10 +52,8 @@ $options = [
 try {
      $pdo = new PDO($dsn, $user, $pass, $options);
 } catch (\PDOException $e) {
-     // W produkcji NIE loguj $e->getMessage() jawnie do usera, 
-     // bo może zdradzić IP bazy. Loguj to do pliku (error_log).
-     error_log("DB Connection Error: " . $e->getMessage());
-     die("Wystąpił błąd krytyczny podczas łączenia z bazą danych.");
+     // TYMCZASOWY DEBUG - usuniemy to po znalezieniu przyczyny
+     die("Błąd bazy: " . $e->getMessage() . " | DSN: $dsn | User: $user");
 }
 
 // =========================================================================
