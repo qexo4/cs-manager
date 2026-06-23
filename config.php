@@ -1,12 +1,45 @@
 <?php
 // =========================================================================
-// 1. DANE POŁĄCZENIOWE DO BAZY POSTGRESQL (SUPABASE IPV4 POOLER)
+// 0. ŁADOWANIE ZMIENNYCH ŚRODOWISKOWYCH (Lokalny parser .env)
 // =========================================================================
-$host = 'aws-0-eu-west-1.pooler.supabase.com'; 
-$port = '5432';                                
-$user = 'postgres.gspabzptmmwboauxwvip';       
-$pass = 'ZXC123asd!@#1';                       
-$db   = 'postgres';
+$envFile = __DIR__ . '/.env';
+if (file_exists($envFile)) {
+    $lines = file($envFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+    foreach ($lines as $line) {
+        // Ignorowanie komentarzy (#)
+        if (strpos(trim($line), '#') === 0) continue; 
+        
+        // Rozdzielanie po pierwszym znaku '=' (wartości mogą zawierać '=')
+        list($name, $value) = explode('=', $line, 2);
+        
+        $name = trim($name);
+        // Usunięcie białych znaków oraz opcjonalnych cudzysłowów
+        $value = trim($value, " \t\n\r\0\x0B\""); 
+        
+        if (!array_key_exists($name, $_SERVER) && !array_key_exists($name, $_ENV)) {
+            putenv(sprintf('%s=%s', $name, $value));
+            $_ENV[$name] = $value;
+            $_SERVER[$name] = $value;
+        }
+    }
+}
+
+/**
+ * Funkcja pomocnicza do bezpiecznego pobierania zmiennych
+ */
+function env($key, $default = null) {
+    $value = getenv($key);
+    return $value !== false ? $value : $default;
+}
+
+// =========================================================================
+// 1. DANE POŁĄCZENIOWE DO BAZY POSTGRESQL
+// =========================================================================
+$host = env('DB_HOST'); 
+$port = env('DB_PORT', '5432'); // 5432 jako domyślny fallback
+$user = env('DB_USER');       
+$pass = env('DB_PASS');                       
+$db   = env('DB_NAME', 'postgres');
 
 $dsn = "pgsql:host=$host;port=$port;dbname=$db";
 
@@ -19,18 +52,23 @@ $options = [
 try {
      $pdo = new PDO($dsn, $user, $pass, $options);
 } catch (\PDOException $e) {
-     die("Błąd połączenia z nową bazą danych: " . $e->getMessage());
+     // W produkcji NIE loguj $e->getMessage() jawnie do usera, 
+     // bo może zdradzić IP bazy. Loguj to do pliku (error_log).
+     error_log("DB Connection Error: " . $e->getMessage());
+     die("Wystąpił błąd krytyczny podczas łączenia z bazą danych.");
 }
 
 // =========================================================================
 // 2. FUNKCJE POMOCNICZE (POWIADOMIENIA DISCORD)
 // =========================================================================
-/**
- * Wysyła sformatowaną wiadomość na Discord za pomocą Webhooka
- */
 function sendDiscordMessage($message) {
-    // Twój aktualny link webhooka z Discorda
-    $webhookUrl = "https://discord.com/api/webhooks/1519052406787277065/88ydtTiZwu-4H94mol1eoAQEY4yR0-OylXqrMig3InDLss1-1XyAGSQxgp7pQ7NcyEGh";
+    // Pobranie URL z env
+    $webhookUrl = env('DISCORD_WEBHOOK_URL');
+    
+    if (!$webhookUrl) {
+        error_log("Błąd: Nie zdefiniowano DISCORD_WEBHOOK_URL");
+        return false;
+    }
 
     $json_data = json_encode([
         "content" => $message,
