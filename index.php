@@ -49,8 +49,11 @@ $chartData = array_reverse($chartData);
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Manager Kont - cs</title>
+    <link rel="icon" type="image/png" href="https://upload.wikimedia.org/wikipedia/commons/8/83/Steam_icon_logo.svg">
+    
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 </head>
 <body class="bg-gray-900 text-gray-100 font-sans antialiased min-h-screen p-4 md:p-8">
 
@@ -58,8 +61,10 @@ $chartData = array_reverse($chartData);
         
         <header class="bg-gray-800 p-6 rounded-2xl shadow-lg border border-gray-700 space-y-4">
             <div>
-                <h1 class="text-3xl font-bold text-emerald-400">Panel Kont</h1>
-                <p class="text-gray-400 text-sm">Baza danych: <span class="text-emerald-500 font-semibold">cs</span></p>
+                <h1 class="text-3xl font-bold text-emerald-400 flex items-center">
+                    <i class="fa-brands fa-steam mr-3 text-gray-400"></i> Panel Kont
+                </h1>
+                <p class="text-gray-400 text-sm mt-1">Baza danych: <span class="text-emerald-500 font-semibold">cs</span></p>
             </div>
             
             <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 pt-2">
@@ -130,6 +135,7 @@ $chartData = array_reverse($chartData);
                         <label class="block text-xs font-semibold text-gray-400 uppercase mb-1">Długość bana</label>
                         <select name="ban_days" id="ban-days-select" class="w-full bg-gray-700 border border-gray-600 rounded-lg p-2.5 text-white focus:ring-2 focus:ring-emerald-500 focus:outline-none" onchange="toggleCustomDateInput()">
                             <option value="0">Brak bana (Aktywne)</option>
+                            <option value="7">7 dni</option>
                             <option value="8">8 dni</option>
                             <option value="30">30 dni</option>
                             <option value="custom">Własna data (Wybierz z kalendarza)...</option>
