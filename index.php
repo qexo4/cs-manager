@@ -102,7 +102,7 @@ $chartData = array_reverse($chartData);
             
             <div class="bg-gray-800 p-6 rounded-2xl shadow-lg border border-gray-700 h-fit">
                 <h2 class="text-xl font-bold mb-4 text-gray-200">Dodaj / Aktualizuj konto</h2>
-                <form id="account-form" action="process.php" method="POST" class="space-y-4">
+                <form id="account-form" action="/process.php" method="POST" class="space-y-4">
                     <div>
                         <label class="block text-xs font-semibold text-gray-400 uppercase mb-1">Nazwa konta</label>
                         <input type="text" name="name" required class="w-full bg-gray-700 border border-gray-600 rounded-lg p-2.5 text-white focus:ring-2 focus:ring-emerald-500 focus:outline-none">
