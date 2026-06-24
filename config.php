@@ -23,10 +23,9 @@ try {
 }
 
 // =========================================================================
-// 2. FUNKCJE POMOCNICZE (POWIADOMIENIA DISCORD)
+// 2. FUNKCJE POMOCNICZE (POWIADOMIENIA DISCORD) - ZOPTYMALIZOWANE
 // =========================================================================
 function sendDiscordMessage($message) {
-    // Twój nowy webhook
     $webhookUrl = "https://discord.com/api/webhooks/1519052406787277065/88ydtTiZwu-4H94mol1eoAQEY4yR0-OylXqrMig3InDLss1-1XyAGSQxgp7pQ7NcyEGh";
 
     $json_data = json_encode([
@@ -40,15 +39,14 @@ function sendDiscordMessage($message) {
     curl_setopt($ch, CURLOPT_POST, 1);
     curl_setopt($ch, CURLOPT_POSTFIELDS, $json_data);
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-    curl_setopt($ch, CURLOPT_TIMEOUT, 10);
+    
+    // OPTYMALIZACJA PRĘDKOŚCI: Ucinamy czas oczekiwania do minimum!
+    // Serwer nie będzie już "wisiał", jeśli Discord opóźnia odpowiedź.
+    curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 1); // Max 1 sekunda na połączenie
+    curl_setopt($ch, CURLOPT_TIMEOUT, 1);        // Max 1 sekunda na wykonanie
     
     $response = curl_exec($ch);
-    $error = curl_error($ch);
     curl_close($ch);
     
-    if ($error) {
-        error_log("Błąd cURL (Discord): " . $error);
-    }
     return $response;
 }
-?>
