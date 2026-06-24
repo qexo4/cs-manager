@@ -49,7 +49,8 @@ $chartData = array_reverse($chartData);
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Manager Kont - cs</title>
-    <link rel="icon" type="image/png" href="https://upload.wikimedia.org/wikipedia/commons/8/83/Steam_icon_logo.svg">
+    
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%2334d399'><circle cx='12' cy='12' r='9' stroke='%2334d399' stroke-width='2' fill='none'/><circle cx='12' cy='12' r='2' fill='%2334d399'/><path stroke='%2334d399' stroke-width='2' d='M12 2v4M12 18v4M2 12h4M18 12h4'/></svg>">
     
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -62,7 +63,7 @@ $chartData = array_reverse($chartData);
         <header class="bg-gray-800 p-6 rounded-2xl shadow-lg border border-gray-700 space-y-4">
             <div>
                 <h1 class="text-3xl font-bold text-emerald-400 flex items-center">
-                    <i class="fa-brands fa-steam mr-3 text-gray-400"></i> Panel Kont
+                    <i class="fa-solid fa-crosshairs mr-3 text-emerald-400 animate-pulse"></i> Panel Kont
                 </h1>
                 <p class="text-gray-400 text-sm mt-1">Baza danych: <span class="text-emerald-500 font-semibold">cs</span></p>
             </div>
