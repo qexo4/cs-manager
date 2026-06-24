@@ -26,7 +26,7 @@ try {
 // 2. FUNKCJE POMOCNICZE (POWIADOMIENIA DISCORD) - ZOPTYMALIZOWANE
 // =========================================================================
 function sendDiscordMessage($message) {
-    $webhookUrl = "https://discord.com/api/webhooks/1519052406787277065/88ydtTiZwu-4H94mol1eoAQEY4yR0-OylXqrMig3InDLss1-1XyAGSQxgp7pQ7NcyEGh";
+    $webhookUrl = "https://ptb.discord.com/api/webhooks/1519052406787277065/88ydtTiZwu-4H94mol1eoAQEY4yR0-OylXqrMig3InDLss1-1XyAGSQxgp7pQ7NcyEGh";
 
     $json_data = json_encode([
         "content" => $message,
