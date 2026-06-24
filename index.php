@@ -65,7 +65,7 @@ $chartData = array_reverse($chartData);
                 <h1 class="text-3xl font-bold text-emerald-400 flex items-center">
                     <i class="fa-solid fa-crosshairs mr-3 text-emerald-400 animate-pulse"></i> Panel Kont
                 </h1>
-                <p class="text-gray-400 text-sm mt-1">Baza danych: <span class="text-emerald-500 font-semibold">cs</span></p>
+                <p class="text-gray-400 text-sm">Baza danych: <span class="text-emerald-500 font-semibold">cs</span></p>
             </div>
             
             <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 pt-2">
