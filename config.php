@@ -23,9 +23,10 @@ try {
 }
 
 // =========================================================================
-// 2. FUNKCJE POMOCNICZE (POWIADOMIENIA DISCORD) - ZOPTYMALIZOWANE
+// 2. FUNKCJE POMOCNICZE (POWIADOMIENIA DISCORD)
 // =========================================================================
 function sendDiscordMessage($message) {
+    // Darmowe Proxy - omija blokadę IP z Rendera
     $webhookUrl = "https://webhook.lewisakura.moe/api/webhooks/1519052406787277065/88ydtTiZwu-4H94mol1eoAQEY4yR0-OylXqrMig3InDLss1-1XyAGSQxgp7pQ7NcyEGh";
 
     $json_data = json_encode([
@@ -40,13 +41,13 @@ function sendDiscordMessage($message) {
     curl_setopt($ch, CURLOPT_POSTFIELDS, $json_data);
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
     
-    // OPTYMALIZACJA PRĘDKOŚCI: Ucinamy czas oczekiwania do minimum!
-    // Serwer nie będzie już "wisiał", jeśli Discord opóźnia odpowiedź.
-    curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 1); // Max 1 sekunda na połączenie
-    curl_setopt($ch, CURLOPT_TIMEOUT, 1);        // Max 1 sekunda na wykonanie
+    // Zoptymalizowany czas (3 sekundy to idealny balans między szybkością a niezawodnością proxy)
+    curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 3);
+    curl_setopt($ch, CURLOPT_TIMEOUT, 3);
     
     $response = curl_exec($ch);
     curl_close($ch);
     
     return $response;
 }
+?>
