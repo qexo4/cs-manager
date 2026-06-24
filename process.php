@@ -71,7 +71,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'delete' && isset($_GET['id'])
     $stmt = $pdo->prepare("DELETE FROM accounts WHERE id = ?");
     $stmt->execute([$id]);
 
-    header('Location: index.php');
+    header('Location: /');
     exit;
 }
 ?>
