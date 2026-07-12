@@ -17,7 +17,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $sql = "INSERT INTO accounts (name, steam_url, amount, end_amount, profit, result, ban_days, ban_start_at) 
             VALUES (:name, :steam_url, :amount, :end_amount, :profit, :result, :ban_days, :ban_start_at) 
             ON CONFLICT (name) DO UPDATE SET 
-                steam_url = :steam_url2,
+                steam_url = COALESCE(NULLIF(:steam_url2, ''), accounts.steam_url), -- Nie nadpisuj linku pustą wartością
                 amount = :amount2, 
                 end_amount = :end_amount2,
                 profit = accounts.profit + EXCLUDED.profit, -- Sumowanie zysku
