@@ -122,6 +122,10 @@ $chartData = array_reverse($chartData);
                             <label class="block text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1.5">Nazwa konta</label>
                             <input type="text" name="name" required class="w-full bg-gray-950/60 border border-gray-700 rounded-xl p-3 text-white placeholder-gray-500 focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 focus:outline-none transition-all" placeholder="np. CS-Konto-01">
                         </div>
+                        <div>
+                            <label class="block text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1.5">Link do profilu Steam</label>
+                            <input type="url" name="steam_url" class="w-full bg-gray-950/60 border border-gray-700 rounded-xl p-3 text-white placeholder-gray-500 focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 focus:outline-none transition-all" placeholder="https://steamcommunity.com/profiles/7656119...">
+                        </div>
                         <div class="grid grid-cols-2 gap-4">
                             <div>
                                 <label class="block text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1.5">Kwota (Wkład)</label>
@@ -219,7 +223,15 @@ $chartData = array_reverse($chartData);
                         <?php else: ?>
                             <?php foreach ($accounts as $index => $acc): ?>
                                 <tr class="hover:bg-gray-800/30 transition-all duration-150">
-                                    <td class="p-4 font-semibold text-gray-100 tracking-wide"><?= htmlspecialchars($acc['name']) ?></td>
+                                    <td class="p-4 font-semibold text-gray-100 tracking-wide">
+                                        <?php if (!empty($acc['steam_url'])): ?>
+                                            <a href="<?= htmlspecialchars($acc['steam_url']) ?>" target="_blank" rel="noopener noreferrer" class="hover:text-emerald-400 hover:underline transition-colors" title="Otwórz profil Steam w nowej karcie">
+                                                <?= htmlspecialchars($acc['name']) ?>
+                                            </a>
+                                        <?php else: ?>
+                                            <?= htmlspecialchars($acc['name']) ?>
+                                        <?php endif; ?>
+                                    </td>
                                     <td class="p-4 text-gray-400 font-mono text-sm"><?= number_format($acc['amount'], 2, ',', ' ') ?></td>
                                     <td class="p-4 text-amber-400 font-semibold font-mono text-sm"><?= number_format($acc['end_amount'], 2, ',', ' ') ?></td>
                                     <td class="p-4 font-mono text-sm <?= $acc['profit'] >= 0 ? 'text-emerald-400 font-bold' : 'text-rose-400 font-bold' ?>">
