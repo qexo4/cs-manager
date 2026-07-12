@@ -1,4 +1,9 @@
 <?php
+// Włączenie pliku konfiguracyjnego z połączeniem PDO oraz obsługą .env
+require_once 'config.php'; 
+
+// Skrypt cron odpala się przy odświeżeniu, aby aktualizować statusy w tle
+require_once 'cron.php';
 // Pobranie danych
 $stmt = $pdo->query("SELECT * FROM accounts ORDER BY id DESC");
 $accounts = $stmt->fetchAll();
