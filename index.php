@@ -1,7 +1,4 @@
 <?php
-// Skrypt cron odpala się przy odświeżeniu, aby aktualizować statusy w tle
-require_once 'cron.php'; 
-
 // Pobranie danych
 $stmt = $pdo->query("SELECT * FROM accounts ORDER BY id DESC");
 $accounts = $stmt->fetchAll();
@@ -55,7 +52,6 @@ $chartData = array_reverse($chartData);
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
         body { font-family: 'Inter', sans-serif; }
-        /* Płynne przewijanie pasków */
         ::-webkit-scrollbar { width: 8px; height: 8px; }
         ::-webkit-scrollbar-track { background: #111827; }
         ::-webkit-scrollbar-thumb { background: #374151; border-radius: 4px; }
@@ -74,10 +70,6 @@ $chartData = array_reverse($chartData);
                     <h1 class="text-3xl font-extrabold tracking-tight bg-gradient-to-r from-emerald-400 via-teal-300 to-cyan-400 bg-clip-text text-transparent">
                         Panel Zarządzania Kontami
                     </h1>
-                    <p class="text-gray-400 text-xs mt-1 flex items-center gap-1.5">
-                        <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                        Baza danych active: <span class="text-gray-200 font-semibold uppercase tracking-wider">cs</span>
-                    </p>
                 </div>
             </div>
             
@@ -103,8 +95,10 @@ $chartData = array_reverse($chartData);
                     </div>
                 </div>
                 <div class="bg-gray-800/40 backdrop-blur-md p-4 rounded-xl border border-amber-500/20 col-span-1 sm:col-span-2 lg:col-span-1 transition-all duration-200 hover:scale-[1.02]">
-                    <p class="text-[11px] text-amber-400 uppercase font-bold tracking-wider">Najbliższy Unban</p>
-                    <p id="top-shortest-ban" class="text-sm font-bold text-gray-200 mt-1.5 break-all truncate">Obliczanie...</p>
+                    <p class="text-[11px] text-amber-400 uppercase font-bold tracking-wider mb-1">Najbliższe Unbany (Top 3)</p>
+                    <div id="top-shortest-ban" class="text-xs font-bold text-gray-200 space-y-1">
+                        Obliczanie...
+                    </div>
                 </div>
             </div>
         </header>
@@ -152,6 +146,7 @@ $chartData = array_reverse($chartData);
                             <label class="block text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1.5">Modyfikator Blokady (Ban)</label>
                             <select name="ban_days" id="ban-days-select" class="w-full bg-gray-950/60 border border-gray-700 rounded-xl p-3 text-white focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 focus:outline-none transition-all cursor-pointer" onchange="toggleCustomDateInput()">
                                 <option value="0">Brak aktywnej blokady</option>
+                                <option value="7">🔒 Blokada turniejowa (7 dni)</option>
                                 <option value="8">🔒 Blokada komercyjna (8 dni)</option>
                                 <option value="30">🔒 Blokada pełna (30 dni)</option>
                                 <option value="custom">📅 Definiuj własny czas unbana...</option>
@@ -334,9 +329,9 @@ $chartData = array_reverse($chartData);
 
         function updateBanTimers() {
             const now = Date.now();
-            let shortestTime = Infinity;
-            let shortestLabel = "";
+            let bannedAccounts = [];
             
+            // Zbieramy dane o wszystkich zbanowanych kontach z tabeli
             document.querySelectorAll('.ban-countdown').forEach((timerEl) => {
                 const startTime = parseInt(timerEl.getAttribute('data-start'));
                 const banDays = parseInt(timerEl.getAttribute('data-days'));
@@ -359,31 +354,45 @@ $chartData = array_reverse($chartData);
 
                     timerEl.innerHTML = `🔒 ${label}`;
 
-                    if (timeLeft < shortestTime) {
-                        shortestTime = timeLeft;
-                        shortestLabel = `${accName} (${days > 0 ? days + 'd ' : ''}${hours}h ${minutes}m)`;
-                    }
+                    // Dodajemy konto do tablicy obiektów w celu wyłonienia TOP 3 najbliższych unbanów
+                    bannedAccounts.push({
+                        name: accName,
+                        timeLeft: timeLeft,
+                        formattedString: `${accName}: ${days > 0 ? days + 'd ' : ''}${hours}h ${minutes}m`
+                    });
                 }
             });
 
             const topBox = document.getElementById('top-shortest-ban');
-            if (shortestTime === Infinity) {
-                topBox.innerText = "Pełna dostępność";
+            
+            if (bannedAccounts.length === 0) {
+                topBox.innerHTML = "Pełna dostępność";
                 topBox.className = "text-sm font-bold text-emerald-400 mt-1.5";
             } else {
-                topBox.innerText = shortestLabel;
-                topBox.className = "text-sm font-bold text-amber-400 mt-1.5 truncate";
+                // Sortujemy od najmniejszego pozostałego czasu unbana
+                bannedAccounts.sort((a, b) => a.timeLeft - b.timeLeft);
+                
+                // Wybieramy maksymalnie 3 najbliższe konta
+                const top3 = bannedAccounts.slice(0, 3);
+                
+                // Generujemy linie tekstu dla kafelka
+                let htmlOutput = "";
+                top3.forEach((acc) => {
+                    htmlOutput += `<div class="truncate text-amber-400">• ${acc.formattedString}</div>`;
+                });
+                
+                topBox.innerHTML = htmlOutput;
+                topBox.className = "text-xs font-bold text-gray-200 mt-1.5 space-y-0.5";
             }
         }
         setInterval(updateBanTimers, 1000);
         updateBanTimers();
 
-        // INICJALIZACJA WYKRESU O WYŻSZEJ ESTETYCE
+        // INICJALIZACJA WYKRESU O WYŻSZEY ESTETYCE
         const ctx = document.getElementById('profitChart').getContext('2d');
         const chartLabels = <?php echo json_encode($chartLabels); ?>;
         const chartData = <?php echo json_encode($chartData); ?>;
 
-        // Tworzenie gradientu dla słupków wykresu
         const gradient = ctx.createLinearGradient(0, 0, 0, 300);
         gradient.addColorStop(0, 'rgba(16, 185, 129, 0.4)');
         gradient.addColorStop(1, 'rgba(16, 185, 129, 0.02)');
