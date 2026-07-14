@@ -183,9 +183,19 @@ foreach ($achievementCategories as $cat) {
     .tab-panel.hidden { display: none; }
 
     .achievement-card:hover { transform: translateY(-2px); box-shadow: 0 12px 30px -12px rgba(0,0,0,0.5); }
+
+    @keyframes coinSpin { from { transform: rotateY(0deg); } to { transform: rotateY(360deg); } }
+    .coin-spin { animation: coinSpin 2.4s linear infinite; transform-style: preserve-3d; backface-visibility: visible; }
 </style>
 </head>
 <body class="bg-[#0b0f19] text-gray-100 font-sans antialiased min-h-screen p-4 md:p-8 selection:bg-emerald-500 selection:text-gray-900">
+
+<div class="fixed top-4 left-4 z-40 select-none pointer-events-none" style="perspective: 600px;" aria-hidden="true" title="CS Premium">
+    <div class="coin-spin w-11 h-11 rounded-full bg-gradient-to-br from-amber-300 via-yellow-500 to-amber-600 border-2 border-amber-300/60 shadow-lg shadow-amber-500/30 flex items-center justify-center text-gray-900 font-black text-xl">
+        $
+    </div>
+</div>
+
 <div class="max-w-7xl mx-auto space-y-8">
 
     <header class="relative bg-gradient-to-r from-gray-900 via-gray-800 to-gray-900 p-6 rounded-2xl shadow-2xl border border-gray-800 overflow-hidden">
