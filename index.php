@@ -46,6 +46,107 @@ $chartData = array_reverse($chartData);
 // Win Rate liczony wyłącznie po rozstrzygniętych sesjach (win/lose), remisy pomijamy
 $decidedCount = $winsCount + $lossesCount;
 $winRate = $decidedCount > 0 ? round(($winsCount / $decidedCount) * 100, 1) : 0;
+
+// ====== OSIĄGNIĘCIA ======
+// Progi (tiery) dla każdej kategorii - kolejność rosnąca.
+$achievementCategories = [
+    [
+        'key' => 'accounts',
+        'icon' => '🗂️',
+        'title' => 'Liczba kont',
+        'unit' => '',
+        'current' => $totalAccounts,
+        'tiers' => [10, 25, 50, 100, 250, 500],
+    ],
+    [
+        'key' => 'profit',
+        'icon' => '💰',
+        'title' => 'Zysk netto',
+        'unit' => ' zł',
+        'current' => $totalProfit,
+        'tiers' => [1000, 5000, 10000, 25000, 50000, 100000],
+    ],
+    [
+        'key' => 'wins',
+        'icon' => '🏆',
+        'title' => 'Wygrane sesje',
+        'unit' => '',
+        'current' => $winsCount,
+        'tiers' => [10, 25, 50, 100, 200],
+    ],
+];
+
+// Kolory "rang" - im wyższy tier tym wyżej na liście (bronz -> srebro -> złoto -> platyna -> diament)
+$tierColors = [
+    ['dot' => 'bg-gray-500', 'ring' => 'ring-gray-500/40', 'text' => 'text-gray-300', 'grad' => 'from-gray-500 to-gray-600', 'label' => 'Brąz'],
+    ['dot' => 'bg-emerald-400', 'ring' => 'ring-emerald-400/40', 'text' => 'text-emerald-300', 'grad' => 'from-emerald-400 to-teal-500', 'label' => 'Srebro'],
+    ['dot' => 'bg-cyan-400', 'ring' => 'ring-cyan-400/40', 'text' => 'text-cyan-300', 'grad' => 'from-cyan-400 to-blue-500', 'label' => 'Złoto'],
+    ['dot' => 'bg-amber-400', 'ring' => 'ring-amber-400/40', 'text' => 'text-amber-300', 'grad' => 'from-amber-400 to-orange-500', 'label' => 'Platyna'],
+    ['dot' => 'bg-violet-400', 'ring' => 'ring-violet-400/40', 'text' => 'text-violet-300', 'grad' => 'from-violet-400 to-fuchsia-500', 'label' => 'Diament'],
+    ['dot' => 'bg-rose-400', 'ring' => 'ring-rose-400/40', 'text' => 'text-rose-300', 'grad' => 'from-rose-400 to-pink-500', 'label' => 'Legenda'],
+];
+
+foreach ($achievementCategories as &$cat) {
+    $achievedCount = 0;
+    $nextTier = null;
+    foreach ($cat['tiers'] as $tier) {
+        if ($cat['current'] >= $tier) {
+            $achievedCount++;
+        } elseif ($nextTier === null) {
+            $nextTier = $tier;
+        }
+    }
+    $cat['achievedCount'] = $achievedCount;
+    $cat['maxed'] = $nextTier === null;
+    $cat['nextTier'] = $nextTier;
+    if ($nextTier !== null) {
+        $prevTier = $achievedCount > 0 ? $cat['tiers'][$achievedCount - 1] : 0;
+        $span = $nextTier - $prevTier;
+        $progressInto = $cat['current'] - $prevTier;
+        $cat['progressPct'] = $span > 0 ? max(0, min(100, round(($progressInto / $span) * 100))) : 100;
+    } else {
+        $cat['progressPct'] = 100;
+    }
+    $rankIndex = min($achievedCount, count($tierColors) - 1);
+    $cat['rankColor'] = $tierColors[$rankIndex];
+}
+unset($cat);
+
+// ====== HISTORIA ZDOBYCIA OSIĄGNIĘĆ (data odblokowania każdego progu) ======
+// Panel nie ma cyklicznego crona liczącego "dokładny moment" przekroczenia progu,
+// więc datujemy próg w chwili, w której po raz pierwszy zostanie zauważony jako
+// osiągnięty (czyli przy najbliższym odświeżeniu strony po jego przekroczeniu) -
+// to ta sama logika co reszta panelu (cron.php też odpala się przy odświeżeniu).
+$pdo->exec("CREATE TABLE IF NOT EXISTS achievement_unlocks (
+    id SERIAL PRIMARY KEY,
+    category VARCHAR(32) NOT NULL,
+    tier NUMERIC NOT NULL,
+    unlocked_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    UNIQUE(category, tier)
+)");
+
+$insertUnlock = $pdo->prepare(
+    "INSERT INTO achievement_unlocks (category, tier, unlocked_at)
+     VALUES (:category, :tier, NOW())
+     ON CONFLICT (category, tier) DO NOTHING"
+);
+foreach ($achievementCategories as $cat) {
+    foreach ($cat['tiers'] as $tier) {
+        if ($cat['current'] >= $tier) {
+            $insertUnlock->execute(['category' => $cat['key'], 'tier' => $tier]);
+        }
+    }
+}
+
+// Pobranie pełnej historii do wyświetlenia (najnowsze zdobycze na górze)
+$historyStmt = $pdo->query("SELECT category, tier, unlocked_at FROM achievement_unlocks ORDER BY unlocked_at DESC");
+$achievementHistory = $historyStmt->fetchAll();
+
+// Mapa key -> meta (ikona/tytuł/jednostka) do wyświetlenia historii
+$categoryMeta = [];
+foreach ($achievementCategories as $cat) {
+    $categoryMeta[$cat['key']] = $cat;
+}
 ?>
 <!DOCTYPE html>
 <html lang="pl" class="dark">
@@ -75,6 +176,13 @@ $winRate = $decidedCount > 0 ? round(($winsCount / $decidedCount) * 100, 1) : 0;
 
     @keyframes modalIn { from { opacity: 0; transform: scale(0.96); } to { opacity: 1; transform: scale(1); } }
     .modal-in { animation: modalIn 0.15s ease-out; }
+
+    .tab-btn { color: #6b7280; }
+    .tab-btn:hover { color: #d1d5db; }
+    .tab-btn.active-tab { background: #1f2937; color: #f3f4f6; box-shadow: inset 0 0 0 1px rgba(255,255,255,0.06); }
+    .tab-panel.hidden { display: none; }
+
+    .achievement-card:hover { transform: translateY(-2px); box-shadow: 0 12px 30px -12px rgba(0,0,0,0.5); }
 </style>
 </head>
 <body class="bg-[#0b0f19] text-gray-100 font-sans antialiased min-h-screen p-4 md:p-8 selection:bg-emerald-500 selection:text-gray-900">
@@ -129,6 +237,16 @@ $winRate = $decidedCount > 0 ? round(($winsCount / $decidedCount) * 100, 1) : 0;
         </div>
     </header>
 
+    <nav class="flex items-center gap-2 bg-gray-900/60 border border-gray-800 rounded-2xl p-1.5 w-fit">
+        <button type="button" data-tab="dashboard" class="tab-btn active-tab px-5 py-2.5 rounded-xl text-sm font-bold uppercase tracking-wider transition-all duration-200">
+            Panel Główny
+        </button>
+        <button type="button" data-tab="achievements" class="tab-btn px-5 py-2.5 rounded-xl text-sm font-bold uppercase tracking-wider transition-all duration-200">
+            🏅 Osiągnięcia
+        </button>
+    </nav>
+
+    <div id="tab-dashboard" class="tab-panel space-y-8">
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div class="bg-gradient-to-b from-gray-800 to-gray-900 p-6 rounded-2xl shadow-xl border border-gray-800 flex flex-col justify-between">
             <div>
@@ -311,6 +429,105 @@ $winRate = $decidedCount > 0 ? round(($winsCount / $decidedCount) * 100, 1) : 0;
                 </tbody>
             </table>
             <p id="no-results-msg" class="hidden p-8 text-center text-gray-500 text-sm">Brak kont pasujących do wyszukiwania.</p>
+        </div>
+    </div>
+    </div>
+
+    <div id="tab-achievements" class="tab-panel hidden space-y-6">
+        <div class="bg-gradient-to-br from-gray-900 via-gray-900 to-emerald-950/20 border border-gray-800 rounded-2xl p-6">
+            <h2 class="text-xl font-bold text-gray-100 flex items-center gap-2 mb-1">
+                🏅 Tablica Osiągnięć
+            </h2>
+            <p class="text-sm text-gray-500">Postępy odblokowywane automatycznie wraz z rozwojem panelu — im dalej, tym rzadsza ranga.</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <?php foreach ($achievementCategories as $cat): ?>
+                <?php
+                    $displayCurrent = $cat['unit'] === '%' ? $cat['current'] . '%' : number_format($cat['current'], $cat['key'] === 'profit' ? 2 : 0, ',', ' ') . $cat['unit'];
+                    $displayTarget = $cat['maxed'] ? '—' : number_format($cat['nextTier'], 0, ',', ' ') . $cat['unit'];
+                ?>
+                <div class="achievement-card relative bg-gray-900 border border-gray-800 rounded-2xl p-5 overflow-hidden transition-all duration-300 hover:border-gray-700">
+                    <div class="absolute -top-10 -right-10 w-32 h-32 rounded-full bg-gradient-to-br <?= $cat['rankColor']['grad'] ?> opacity-[0.07] blur-2xl pointer-events-none"></div>
+
+                    <div class="flex items-start justify-between relative">
+                        <div class="flex items-center gap-3">
+                            <div class="w-12 h-12 rounded-2xl bg-gray-800 border border-gray-700 ring-2 <?= $cat['rankColor']['ring'] ?> flex items-center justify-center text-2xl">
+                                <?= $cat['icon'] ?>
+                            </div>
+                            <div>
+                                <h3 class="font-bold text-gray-100 text-base"><?= $cat['title'] ?></h3>
+                                <span class="text-[11px] font-bold uppercase tracking-wider <?= $cat['rankColor']['text'] ?>">Ranga: <?= $cat['rankColor']['label'] ?></span>
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <p class="font-mono font-black text-lg text-gray-100"><?= $displayCurrent ?><span class="text-gray-600 text-sm font-normal"> / <?= $displayTarget ?></span></p>
+                        </div>
+                    </div>
+
+                    <div class="mt-4">
+                        <div class="w-full h-2.5 bg-gray-800 rounded-full overflow-hidden">
+                            <div class="h-full rounded-full bg-gradient-to-r <?= $cat['rankColor']['grad'] ?> transition-all duration-700"
+                                 style="width: <?= $cat['maxed'] ? 100 : $cat['progressPct'] ?>%"></div>
+                        </div>
+                        <?php if ($cat['maxed']): ?>
+                            <p class="text-[11px] text-amber-400 font-bold mt-2 uppercase tracking-wider">✨ Wszystkie progi odblokowane</p>
+                        <?php else: ?>
+                            <p class="text-[11px] text-gray-500 mt-2">Do kolejnej rangi: <span class="font-bold text-gray-300"><?= $displayTarget ?></span></p>
+                        <?php endif; ?>
+                    </div>
+
+                    <div class="flex items-center gap-1.5 mt-4 pt-4 border-t border-gray-800/80">
+                        <?php foreach ($cat['tiers'] as $i => $tier): ?>
+                            <?php $unlocked = $cat['current'] >= $tier; $dotColor = $tierColors[min($i, count($tierColors)-1)]['dot']; ?>
+                            <div class="group relative flex-1">
+                                <div class="h-1.5 rounded-full <?= $unlocked ? $dotColor : 'bg-gray-800' ?> transition-colors duration-300"></div>
+                                <span class="pointer-events-none absolute -top-7 left-1/2 -translate-x-1/2 text-[10px] font-mono bg-gray-800 border border-gray-700 text-gray-300 px-1.5 py-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10">
+                                    <?= number_format($tier, 0, ',', ' ') . $cat['unit'] ?>
+                                </span>
+                            </div>
+                        <?php endforeach; ?>
+                    </div>
+                </div>
+            <?php endforeach; ?>
+        </div>
+
+        <div class="bg-gray-900 border border-gray-800 rounded-2xl overflow-hidden">
+            <div class="p-5 border-b border-gray-800">
+                <h2 class="text-lg font-bold text-gray-100 flex items-center gap-2">
+                    📜 Historia zdobyczy
+                </h2>
+                <p class="text-xs text-gray-500 mt-0.5">Data odnosi się do momentu, w którym panel po raz pierwszy zauważył przekroczenie progu.</p>
+            </div>
+            <?php if (empty($achievementHistory)): ?>
+                <p class="p-8 text-center text-gray-500 text-sm">Brak zdobytych progów — dodaj konta lub zwiększ zysk, żeby odblokować pierwsze osiągnięcie.</p>
+            <?php else: ?>
+                <div class="divide-y divide-gray-800/60 max-h-[420px] overflow-y-auto">
+                    <?php foreach ($achievementHistory as $entry):
+                        $meta = $categoryMeta[$entry['category']] ?? null;
+                        if (!$meta) continue;
+                        $tierIndex = array_search((float)$entry['tier'], array_map('floatval', $meta['tiers']));
+                        $rankColor = $tierColors[min($tierIndex !== false ? $tierIndex : 0, count($tierColors) - 1)];
+                        $tierLabel = number_format($entry['tier'], 0, ',', ' ') . $meta['unit'];
+                        $dateLabel = date('d.m.Y', strtotime($entry['unlocked_at']));
+                        $timeLabel = date('H:i', strtotime($entry['unlocked_at']));
+                    ?>
+                    <div class="flex items-center gap-4 px-5 py-3.5 hover:bg-gray-800/30 transition-colors">
+                        <div class="w-9 h-9 shrink-0 rounded-xl bg-gray-800 border border-gray-700 flex items-center justify-center text-base"><?= $meta['icon'] ?></div>
+                        <div class="flex-1 min-w-0">
+                            <p class="text-sm font-semibold text-gray-100 truncate">
+                                <?= $meta['title'] ?> — <span class="<?= $rankColor['text'] ?>"><?= $tierLabel ?></span>
+                            </p>
+                            <p class="text-[11px] text-gray-500">Ranga: <?= $rankColor['label'] ?></p>
+                        </div>
+                        <div class="text-right shrink-0">
+                            <p class="text-sm font-mono font-bold text-gray-200"><?= $dateLabel ?></p>
+                            <p class="text-[11px] font-mono text-gray-600"><?= $timeLabel ?></p>
+                        </div>
+                    </div>
+                    <?php endforeach; ?>
+                </div>
+            <?php endif; ?>
         </div>
     </div>
 </div>
@@ -620,6 +837,19 @@ function showToast(message, type = 'success') {
         setTimeout(() => toast.remove(), 220);
     }, 3200);
 }
+
+// ===== PRZEŁĄCZANIE ZAKŁADEK =====
+const tabButtons = document.querySelectorAll('.tab-btn');
+const tabPanels = document.querySelectorAll('.tab-panel');
+
+function activateTab(tabKey) {
+    tabButtons.forEach(b => b.classList.toggle('active-tab', b.dataset.tab === tabKey));
+    tabPanels.forEach(p => p.classList.toggle('hidden', p.id !== 'tab-' + tabKey));
+    localStorage.setItem('cs-manager-active-tab', tabKey);
+}
+tabButtons.forEach(btn => {
+    btn.addEventListener('click', () => activateTab(btn.dataset.tab));
+});
 
 // Po redirectach z process.php (?status=added / updated / deleted) pokazujemy toast
 (function() {
