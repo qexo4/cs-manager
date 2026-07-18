@@ -1,6 +1,21 @@
 <?php
 require_once 'config.php';
 
+// ====== NAPRAWA: kolumna "result" miała limit 50 znaków (VARCHAR(50)) ======
+// Aplikacja dopisuje do niej wynik każdej kolejnej sesji po przecinku
+// (np. "win, lose, remis, win, ..."), więc przy dłuższej historii konta
+// string przekraczał 50 znaków i baza rzucała błąd "value too long".
+// Rozszerzamy kolumnę raz do TEXT (bez limitu) - po pierwszym uruchomieniu
+// character_maximum_length będzie już NULL, więc kolejne odświeżenia
+// wykonują tylko lekki SELECT i nic więcej nie zmieniają.
+$resultColumn = $pdo->query(
+    "SELECT character_maximum_length FROM information_schema.columns
+     WHERE table_name = 'accounts' AND column_name = 'result'"
+)->fetch();
+if ($resultColumn && $resultColumn['character_maximum_length'] !== null) {
+    $pdo->exec("ALTER TABLE accounts ALTER COLUMN result TYPE TEXT");
+}
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     // ====== NOWA GAŁĄŹ: EDYCJA ISTNIEJĄCEGO KONTA ======
