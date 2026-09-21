@@ -113,10 +113,6 @@ foreach ($achievementCategories as &$cat) {
 unset($cat);
 
 // ====== HISTORIA ZDOBYCIA OSIĄGNIĘĆ (data odblokowania każdego progu) ======
-// Panel nie ma cyklicznego crona liczącego "dokładny moment" przekroczenia progu,
-// więc datujemy próg w chwili, w której po raz pierwszy zostanie zauważony jako
-// osiągnięty (czyli przy najbliższym odświeżeniu strony po jego przekroczeniu) -
-// to ta sama logika co reszta panelu (cron.php też odpala się przy odświeżeniu).
 $pdo->exec("CREATE TABLE IF NOT EXISTS achievement_unlocks (
     id SERIAL PRIMARY KEY,
     category VARCHAR(32) NOT NULL,
@@ -188,7 +184,7 @@ foreach ($achievementCategories as $cat) {
     .coin-spin { animation: coinSpin 2.4s linear infinite; transform-style: preserve-3d; backface-visibility: visible; }
 </style>
 </head>
-<body class="bg-[#0b0f19] text-gray-100 font-sans antialiased min-h-screen p-4 md:p-8 selection:bg-emerald-500 selection:text-gray-900">
+<body class="bg-[#0b0f19] text-gray-100 font-sans antialiased min-h-screen p-2 md:p-4 selection:bg-emerald-500 selection:text-gray-900">
 
 <div class="fixed top-4 left-4 z-40 select-none pointer-events-none" style="perspective: 600px;" aria-hidden="true" title="CS Premium">
     <div class="coin-spin w-11 h-11 rounded-full bg-gradient-to-br from-amber-300 via-yellow-500 to-amber-600 border-2 border-amber-300/60 shadow-lg shadow-amber-500/30 flex items-center justify-center text-gray-900 font-black text-xl">
@@ -196,7 +192,7 @@ foreach ($achievementCategories as $cat) {
     </div>
 </div>
 
-<div class="max-w-7xl mx-auto space-y-8">
+<div class="max-w-[1600px] mx-auto space-y-8">
 
     <header class="relative bg-gradient-to-r from-gray-900 via-gray-800 to-gray-900 p-6 rounded-2xl shadow-2xl border border-gray-800 overflow-hidden">
         <div class="absolute top-0 right-0 -mt-4 -mr-4 w-56 h-56 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none"></div>
@@ -239,7 +235,7 @@ foreach ($achievementCategories as $cat) {
                 </div>
             </div>
             <div class="bg-gray-800/40 backdrop-blur-md p-4 rounded-xl border border-amber-500/20 col-span-1 sm:col-span-2 lg:col-span-1 transition-all duration-200 hover:scale-[1.02]">
-                <p class="text-[11px] text-amber-400 uppercase font-bold tracking-wider mb-1">Najbliższe Unbany (Top 3)</p>
+                <p class="text-[11px] text-amber-400 uppercase font-bold tracking-wider mb-1">Najbliższe Unbany (Top 5)</p>
                 <div id="top-shortest-ban" class="text-xs font-bold text-gray-200 space-y-1">
                     Obliczanie...
                 </div>
@@ -276,11 +272,11 @@ foreach ($achievementCategories as $cat) {
                     <div class="grid grid-cols-2 gap-4">
                         <div>
                             <label class="block text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1.5">Kwota (Wkład)</label>
-                            <input type="number" id="input-amount" name="amount" step="0.01" required class="w-full bg-gray-950/60 border border-gray-700 rounded-xl p-3 text-white focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 focus:outline-none transition-all">
+                            <input type="number" id="input-amount" name="amount" step="0.01" required value="0" class="w-full bg-gray-950/60 border border-gray-700 rounded-xl p-3 text-white focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 focus:outline-none transition-all">
                         </div>
                         <div>
                             <label class="block text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1.5">Koniec (Finał)</label>
-                            <input type="number" id="input-end" name="end_amount" step="0.01" required class="w-full bg-gray-950/60 border border-gray-700 rounded-xl p-3 text-white focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 focus:outline-none transition-all">
+                            <input type="number" id="input-end" name="end_amount" step="0.01" required value="0" class="w-full bg-gray-950/60 border border-gray-700 rounded-xl p-3 text-white focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 focus:outline-none transition-all">
                         </div>
                     </div>
                     <div class="bg-gray-950/40 p-3 rounded-xl border border-gray-800 text-xs text-gray-400 flex justify-between items-center">
@@ -701,7 +697,7 @@ function updateBanTimers() {
         topBox.className = "text-sm font-bold text-emerald-400 mt-1.5";
     } else {
         bannedAccounts.sort((a, b) => a.timeLeft - b.timeLeft);
-        const top3 = bannedAccounts.slice(0, 3);
+        const top3 = bannedAccounts.slice(0, 5);
 
         let htmlOutput = "";
         top3.forEach((acc) => {
