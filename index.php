@@ -318,7 +318,7 @@ foreach ($achievementCategories as $cat) {
             </div>
         </div>
 
-        <div class="lg:col-span-2 bg-gradient-to-b from-gray-800 to-gray-900 p-6 rounded-2xl shadow-xl border border-gray-800 flex flex-col justify-between">
+        <div class="lg:col-span-2 bg-gradient-to-b from-gray-800 to-gray-900 p-6 rounded-2xl shadow-xl border border-gray-800 flex flex-col">
             <div class="flex items-center justify-between mb-4">
                 <h2 class="text-xl font-bold text-gray-100 flex items-center gap-2">
                     <svg class="w-5 h-5 text-teal-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 002 2h2a2 2 0 002-2"></path></svg>
@@ -326,8 +326,8 @@ foreach ($achievementCategories as $cat) {
                 </h2>
                 <span class="text-[10px] bg-gray-700/50 text-gray-300 px-2 py-1 rounded font-mono uppercase">Netto PLN</span>
             </div>
-            <div class="relative w-full h-72 md:h-full min-h-[300px]">
-                <canvas id="profitChart"></canvas>
+            <div class="relative w-full flex-1 min-h-[320px] max-h-[420px]">
+                <canvas id="profitChart" class="!w-full !h-full"></canvas>
             </div>
         </div>
     </div>
